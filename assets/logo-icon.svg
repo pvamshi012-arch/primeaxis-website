@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 68 86" fill="none">
+  <defs>
+    <linearGradient id="so" x1="32" y1="0" x2="32" y2="84" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#e8ecf0"/>
+      <stop offset="20%" stop-color="#d0d6de"/>
+      <stop offset="45%" stop-color="#b8c0cb"/>
+      <stop offset="70%" stop-color="#a0aab8"/>
+      <stop offset="100%" stop-color="#8892a2"/>
+    </linearGradient>
+    <linearGradient id="si" x1="32" y1="4" x2="32" y2="80" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#f5f7fa"/>
+      <stop offset="15%" stop-color="#e6eaef"/>
+      <stop offset="50%" stop-color="#cdd4dc"/>
+      <stop offset="85%" stop-color="#b0bac6"/>
+      <stop offset="100%" stop-color="#9aa6b4"/>
+    </linearGradient>
+    <linearGradient id="sr" x1="10" y1="10" x2="58" y2="72" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.6"/>
+      <stop offset="30%" stop-color="#ffffff" stop-opacity="0.2"/>
+      <stop offset="60%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="pf" x1="24" y1="12" x2="40" y2="72" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#5bb8e8"/>
+      <stop offset="30%" stop-color="#3a9ad6"/>
+      <stop offset="60%" stop-color="#2580c0"/>
+      <stop offset="100%" stop-color="#1a6aa8"/>
+    </linearGradient>
+    <linearGradient id="df" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4db4e6"/>
+      <stop offset="100%" stop-color="#1a78b8"/>
+    </linearGradient>
+  </defs>
+
+  <g transform="translate(2, 2)">
+    <!-- Shield -->
+    <path d="M8,9 C8,4.5 12,1 18,1 L46,1 C52,1 56,4.5 56,9 L56,44 C56,58 33,80 32,81 C31,80 8,58 8,44 Z"
+          fill="url(#so)"/>
+    <path d="M10,10 C10,6 14,3 18,3 L46,3 C50,3 54,6 54,10 L54,43 C54,56 33,76 32,77 C31,76 10,56 10,43 Z"
+          fill="url(#si)"/>
+    <path d="M10,10 C10,6 14,3 18,3 L46,3 C50,3 54,6 54,10 L54,43 C54,56 33,76 32,77 C31,76 10,56 10,43 Z"
+          fill="url(#sr)"/>
+    <path d="M8,9 C8,4.5 12,1 18,1 L46,1 C52,1 56,4.5 56,9 L56,44 C56,58 33,80 32,81 C31,80 8,58 8,44 Z"
+          fill="none" stroke="#a0aab6" stroke-width="0.8" opacity="0.5"/>
+
+    <!-- P figure -->
+    <path d="M25,24 L25,66" stroke="url(#pf)" stroke-width="6" stroke-linecap="round"/>
+    <path d="M25,24 C25,24 26,20 31,18 C35,16 42,17 44,20 C46,23 46,28 44,31 C42,34 37,35 33,35 L25,35"
+          fill="none" stroke="url(#pf)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M40,22 C42,18 45,13 49,10" fill="none" stroke="url(#pf)" stroke-width="4.5" stroke-linecap="round"/>
+    <path d="M25,60 C22,64 20,66 18,68" fill="none" stroke="url(#pf)" stroke-width="4" stroke-linecap="round" opacity="0.85"/>
+
+    <!-- Dots -->
+    <circle cx="46" cy="31" r="3" fill="url(#df)" opacity="0.65"/>
+    <circle cx="50" cy="20" r="3.5" fill="url(#df)" opacity="0.8"/>
+    <circle cx="52" cy="9" r="4" fill="url(#df)" opacity="0.95"/>
+  </g>
+</svg>

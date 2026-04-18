@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Database (regenerated on first run)
+server/data/*.db
+server/data/*.db-shm
+server/data/*.db-wal
+
+# Uploads (user-uploaded files)
+server/uploads/
+
+# Environment
+server/.env
+
+# Logs
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.swp
+*.swo

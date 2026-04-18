@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Careers | PrimeAxis IT Solutions</title>
+    <meta name="description" content="Join PrimeAxis IT Solutions. Explore career opportunities in SAP, VLSI, Embedded Systems, Full Stack Development, Cloud, AI and more.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
+    <link rel="icon" type="image/svg+xml" href="assets/logo-icon.svg">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/careers.css">
+</head>
+<body>
+
+    <!-- ===== NAVIGATION ===== -->
+    <header id="header" class="header scrolled">
+        <nav class="navbar container">
+            <a href="index.html" class="logo">
+                <img src="assets/logo-white.svg" alt="PrimeAxis IT Solutions" class="logo-img">
+            </a>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="index.html#about" class="nav-link">About</a></li>
+                <li><a href="index.html#services" class="nav-link">Services</a></li>
+                <li><a href="index.html#technologies" class="nav-link">Technologies</a></li>
+                <li><a href="careers.html" class="nav-link active">Careers</a></li>
+                <li><a href="index.html#contact" class="nav-link">Contact</a></li>
+            </ul>
+            <a href="index.html#contact" class="btn btn-primary nav-cta">Get a Quote</a>
+            <a href="/portal/login.html" class="btn btn-outline nav-cta" style="margin-left:8px"><i class="fas fa-lock"></i> Portal</a>
+            <button class="hamburger" id="hamburger" aria-label="Toggle navigation">
+                <span></span><span></span><span></span>
+            </button>
+        </nav>
+    </header>
+
+    <!-- ===== CAREERS HERO ===== -->
+    <section class="careers-hero">
+        <div class="careers-hero-bg"></div>
+        <div class="container">
+            <div class="careers-hero-content" data-aos="fade-up">
+                <span class="section-tag"><i class="fas fa-briefcase"></i> Join Our Team</span>
+                <h1>Build Your Career at <span>PrimeAxis IT</span></h1>
+                <p>We're looking for passionate technologists to join our growing team. Explore opportunities in SAP, VLSI, Embedded Systems, Full Stack Development, Cloud, AI, and more.</p>
+                <div class="careers-hero-stats">
+                    <div class="stat"><strong id="jobCount">—</strong><span>Open Positions</span></div>
+                    <div class="stat"><strong>50+</strong><span>Team Members</span></div>
+                    <div class="stat"><strong>5-Day</strong><span>Work Week</span></div>
+                    <div class="stat"><strong>Hyderabad</strong><span>HQ Location</span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== WHY JOIN US ===== -->
+    <section class="why-join section-padding">
+        <div class="container">
+            <div class="section-header" data-aos="fade-up">
+                <span class="section-tag"><i class="fas fa-heart"></i> Why PrimeAxis IT</span>
+                <h2 class="section-title">Why You'll Love Working Here</h2>
+            </div>
+            <div class="perks-grid" data-aos="fade-up">
+                <div class="perk-card">
+                    <div class="perk-icon"><i class="fas fa-graduation-cap"></i></div>
+                    <h4>Learning & Growth</h4>
+                    <p>Access to certifications, training programs, and mentorship from industry experts.</p>
+                </div>
+                <div class="perk-card">
+                    <div class="perk-icon"><i class="fas fa-calendar-check"></i></div>
+                    <h4>Work-Life Balance</h4>
+                    <p>5-day work week (Mon–Fri), flexible hours, and generous leave policy (39 days/year).</p>
+                </div>
+                <div class="perk-card">
+                    <div class="perk-icon"><i class="fas fa-heartbeat"></i></div>
+                    <h4>Health & Wellness</h4>
+                    <p>Comprehensive health insurance, ESI benefits, and employee wellness programs.</p>
+                </div>
+                <div class="perk-card">
+                    <div class="perk-icon"><i class="fas fa-indian-rupee-sign"></i></div>
+                    <h4>Competitive Salary</h4>
+                    <p>Industry-standard CTC with PF, gratuity, performance bonuses, and annual appraisals.</p>
+                </div>
+                <div class="perk-card">
+                    <div class="perk-icon"><i class="fas fa-rocket"></i></div>
+                    <h4>Cutting-Edge Tech</h4>
+                    <p>Work on SAP, VLSI, Embedded, Cloud, AI/ML — the latest technologies in the market.</p>
+                </div>
+                <div class="perk-card">
+                    <div class="perk-icon"><i class="fas fa-users"></i></div>
+                    <h4>Great Culture</h4>
+                    <p>Collaborative, inclusive workplace with team events, celebrations, and open-door policy.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== JOB LISTINGS ===== -->
+    <section class="job-listings section-padding" id="openings">
+        <div class="container">
+            <div class="section-header" data-aos="fade-up">
+                <span class="section-tag"><i class="fas fa-search"></i> Open Positions</span>
+                <h2 class="section-title">Current Openings</h2>
+                <p class="section-subtitle">Find the role that matches your skills and aspirations</p>
+            </div>
+
+            <div class="job-filters" data-aos="fade-up">
+                <div class="filter-group">
+                    <select id="filterDept" onchange="filterJobs()">
+                        <option value="">All Departments</option>
+                    </select>
+                    <select id="filterType" onchange="filterJobs()">
+                        <option value="">All Types</option>
+                        <option value="full-time">Full-Time</option>
+                        <option value="part-time">Part-Time</option>
+                        <option value="contract">Contract</option>
+                        <option value="internship">Internship</option>
+                    </select>
+                    <select id="filterExp" onchange="filterJobs()">
+                        <option value="">All Experience</option>
+                        <option value="fresher">Fresher (0 yrs)</option>
+                        <option value="junior">Junior (1-3 yrs)</option>
+                        <option value="mid">Mid (3-6 yrs)</option>
+                        <option value="senior">Senior (6+ yrs)</option>
+                    </select>
+                </div>
+                <div class="job-count-display"><span id="filteredCount">0</span> positions found</div>
+            </div>
+
+            <div class="jobs-grid" id="jobsGrid" data-aos="fade-up">
+                <div class="loading-jobs"><i class="fas fa-spinner fa-spin"></i> Loading positions...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== APPLICATION MODAL ===== -->
+    <div class="apply-overlay" id="applyOverlay">
+        <div class="apply-modal">
+            <button class="apply-close" id="applyClose"><i class="fas fa-times"></i></button>
+
+            <!-- Step 1: Job Details + Form -->
+            <div id="applyStep1">
+                <div class="apply-header">
+                    <h2><i class="fas fa-paper-plane"></i> Apply for Position</h2>
+                    <p id="applyJobTitle" class="apply-job-title"></p>
+                </div>
+
+                <form id="applyForm" class="apply-form" novalidate>
+                    <input type="hidden" id="applyJobId">
+
+                    <div class="apply-grid">
+                        <div class="apply-field">
+                            <label for="applyFirstName">First Name <span class="req">*</span></label>
+                            <input type="text" id="applyFirstName" placeholder="Enter first name" required oninput="validateApplyForm()">
+                            <span class="field-error" id="err_firstName"></span>
+                        </div>
+                        <div class="apply-field">
+                            <label for="applyLastName">Last Name <span class="req">*</span></label>
+                            <input type="text" id="applyLastName" placeholder="Enter last name" required oninput="validateApplyForm()">
+                            <span class="field-error" id="err_lastName"></span>
+                        </div>
+                    </div>
+
+                    <div class="apply-grid">
+                        <div class="apply-field">
+                            <label for="applyEmail">Email Address <span class="req">*</span></label>
+                            <input type="email" id="applyEmail" placeholder="your.email@example.com" required oninput="validateApplyForm()">
+                            <span class="field-error" id="err_email"></span>
+                        </div>
+                        <div class="apply-field">
+                            <label for="applyPhone">Phone Number</label>
+                            <input type="tel" id="applyPhone" placeholder="+91 XXXXXXXXXX" oninput="validateApplyForm()">
+                        </div>
+                    </div>
+
+                    <div class="apply-grid">
+                        <div class="apply-field">
+                            <label for="applyExpType">Experience <span class="req">*</span></label>
+                            <select id="applyExpType" required onchange="toggleExpYears(); validateApplyForm()">
+                                <option value="">Select...</option>
+                                <option value="fresher">Fresher</option>
+                                <option value="experienced">Experienced</option>
+                            </select>
+                            <span class="field-error" id="err_expType"></span>
+                        </div>
+                        <div class="apply-field" id="expYearsField" style="display:none">
+                            <label for="applyExpYears">Years of Experience <span class="req">*</span></label>
+                            <input type="number" id="applyExpYears" min="0.5" max="40" step="0.5" placeholder="e.g. 3" oninput="validateApplyForm()">
+                            <span class="field-error" id="err_expYears"></span>
+                        </div>
+                    </div>
+
+                    <div class="apply-field">
+                        <label for="applyResume">Upload Resume <span class="req">*</span></label>
+                        <div class="resume-upload" id="resumeUploadArea">
+                            <input type="file" id="applyResume" accept=".pdf,.doc,.docx" hidden onchange="handleResumeUpload(this); validateApplyForm()">
+                            <div class="resume-placeholder" id="resumePlaceholder" onclick="document.getElementById('applyResume').click()">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>Click to upload or drag & drop</span>
+                                <small>PDF, DOC, DOCX — Max 5MB</small>
+                            </div>
+                            <div class="resume-uploaded" id="resumeUploaded" style="display:none">
+                                <i class="fas fa-file-pdf"></i>
+                                <span id="resumeFileName"></span>
+                                <button type="button" class="resume-remove" onclick="removeResume()"><i class="fas fa-times"></i></button>
+                            </div>
+                        </div>
+                        <span class="field-error" id="err_resume"></span>
+                    </div>
+
+                    <div class="apply-field">
+                        <label for="applyCoverNote">Cover Note <small>(Optional)</small></label>
+                        <textarea id="applyCoverNote" rows="3" placeholder="Tell us why you're a great fit for this role..."></textarea>
+                    </div>
+
+                    <div class="apply-progress" id="applyProgress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <span id="progressText">0 of 5 required fields completed</span>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg btn-block apply-submit" id="applySubmitBtn" disabled>
+                        <i class="fas fa-paper-plane"></i> Submit Application
+                    </button>
+                </form>
+            </div>
+
+            <!-- Step 2: Success -->
+            <div id="applyStep2" style="display:none">
+                <div class="apply-success">
+                    <div class="success-icon"><i class="fas fa-check-circle"></i></div>
+                    <h2>Application Submitted!</h2>
+                    <p>Thank you for applying. Our HR team will review your profile and get back to you within 5-7 business days.</p>
+                    <p class="success-email">A confirmation has been noted for <strong id="successEmail"></strong></p>
+                    <button class="btn btn-primary" onclick="closeApplyModal()">Back to Careers</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="footer">
+        <div class="footer-top">
+            <div class="container">
+                <div class="footer-grid">
+                    <div class="footer-col">
+                        <a href="index.html" class="footer-logo">
+                            <img src="assets/logo-white.svg" alt="PrimeAxis IT Solutions" class="footer-logo-img">
+                        </a>
+                        <p class="footer-desc">
+                            High-performance software, intelligent cloud systems, and AI solutions 
+                            engineered to scale your business.
+                        </p>
+                        <div class="footer-socials">
+                            <a href="#"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#"><i class="fab fa-twitter"></i></a>
+                            <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                            <a href="#"><i class="fab fa-instagram"></i></a>
+                            <a href="#"><i class="fab fa-github"></i></a>
+                        </div>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Quick Links</h4>
+                        <ul>
+                            <li><a href="index.html">Home</a></li>
+                            <li><a href="index.html#about">About Us</a></li>
+                            <li><a href="index.html#services">Services</a></li>
+                            <li><a href="careers.html">Careers</a></li>
+                            <li><a href="index.html#contact">Contact</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Our Services</h4>
+                        <ul>
+                            <li><a href="index.html#services">Software Development</a></li>
+                            <li><a href="index.html#services">SAP Solutions</a></li>
+                            <li><a href="index.html#services">VLSI & Embedded</a></li>
+                            <li><a href="index.html#services">Cloud Solutions</a></li>
+                            <li><a href="index.html#services">AI & ML Solutions</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Contact Us</h4>
+                        <ul>
+                            <li><i class="fas fa-map-marker-alt"></i> Plot 207, Road 8, KPHB, Hyderabad</li>
+                            <li><i class="fas fa-phone"></i> +91 8333079944</li>
+                            <li><i class="fas fa-envelope"></i> careers@primeaxisit.com</li>
+                            <li><i class="fas fa-clock"></i> Mon–Fri: 9 AM – 6 PM</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="container">
+                <p>&copy; 2025 PrimeAxis IT Solutions. All Rights Reserved.</p>
+                <div class="footer-links">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <button id="backToTop" class="back-to-top" aria-label="Back to top">
+        <i class="fas fa-chevron-up"></i>
+    </button>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+    <script>
+    AOS.init({ duration: 800, easing: 'ease-out-cubic', once: true, offset: 80 });
+
+    // ===== MOBILE NAV =====
+    const hamburger = document.getElementById('hamburger');
+    const navLinks = document.getElementById('navLinks');
+    hamburger.addEventListener('click', () => {
+        hamburger.classList.toggle('active');
+        navLinks.classList.toggle('active');
+        document.body.style.overflow = navLinks.classList.contains('active') ? 'hidden' : '';
+    });
+    navLinks.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', () => { hamburger.classList.remove('active'); navLinks.classList.remove('active'); document.body.style.overflow = ''; });
+    });
+
+    // ===== BACK TO TOP =====
+    const backToTop = document.getElementById('backToTop');
+    window.addEventListener('scroll', () => { backToTop.classList.toggle('visible', window.scrollY > 400); });
+    backToTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+    // ===== LOAD JOBS =====
+    let allJobs = [];
+
+    async function loadJobs() {
+        try {
+            const res = await fetch('/api/careers');
+            allJobs = await res.json();
+            document.getElementById('jobCount').textContent = allJobs.length;
+
+            // Populate department filter
+            const depts = [...new Set(allJobs.map(j => j.department))];
+            const deptSelect = document.getElementById('filterDept');
+            depts.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d; opt.textContent = d;
+                deptSelect.appendChild(opt);
+            });
+
+            renderJobs(allJobs);
+        } catch (e) {
+            document.getElementById('jobsGrid').innerHTML = '<p style="text-align:center;color:#6b7280">Unable to load job listings. Please try again later.</p>';
+        }
+    }
+
+    function filterJobs() {
+        const dept = document.getElementById('filterDept').value;
+        const type = document.getElementById('filterType').value;
+        const exp = document.getElementById('filterExp').value;
+
+        let filtered = allJobs;
+        if (dept) filtered = filtered.filter(j => j.department === dept);
+        if (type) filtered = filtered.filter(j => j.type === type);
+        if (exp) {
+            filtered = filtered.filter(j => {
+                if (exp === 'fresher') return j.experience_min === 0;
+                if (exp === 'junior') return j.experience_min <= 3 && j.experience_max >= 1;
+                if (exp === 'mid') return j.experience_min <= 6 && j.experience_max >= 3;
+                if (exp === 'senior') return j.experience_max >= 6;
+                return true;
+            });
+        }
+        renderJobs(filtered);
+    }
+
+    function renderJobs(jobs) {
+        const grid = document.getElementById('jobsGrid');
+        document.getElementById('filteredCount').textContent = jobs.length;
+
+        if (jobs.length === 0) {
+            grid.innerHTML = '<div class="no-jobs"><i class="fas fa-briefcase"></i><h3>No positions match your filters</h3><p>Try adjusting your filters or check back later for new openings.</p></div>';
+            return;
+        }
+
+        grid.innerHTML = jobs.map(j => {
+            const expText = j.experience_min === 0 && j.experience_max === 0 ? 'Fresher' :
+                j.experience_min === 0 ? `0-${j.experience_max} yrs` : `${j.experience_min}-${j.experience_max} yrs`;
+            const reqs = (j.requirements || '').split('\n').filter(Boolean);
+            return `
+            <div class="job-card">
+                <div class="job-card-header">
+                    <div class="job-dept-badge">${escH(j.department)}</div>
+                    <span class="job-type-badge ${j.type}">${j.type.replace('-', ' ')}</span>
+                </div>
+                <h3 class="job-title">${escH(j.title)}</h3>
+                <p class="job-desc">${escH(j.description || '')}</p>
+                <div class="job-meta">
+                    <span><i class="fas fa-map-marker-alt"></i> ${escH(j.location)}</span>
+                    <span><i class="fas fa-briefcase"></i> ${expText}</span>
+                    <span><i class="fas fa-clock"></i> ${j.type.replace('-', ' ')}</span>
+                </div>
+                ${reqs.length > 0 ? `<div class="job-requirements">
+                    <strong>Key Requirements:</strong>
+                    <ul>${reqs.slice(0, 4).map(r => `<li>${escH(r)}</li>`).join('')}${reqs.length > 4 ? `<li class="more">+${reqs.length - 4} more</li>` : ''}</ul>
+                </div>` : ''}
+                <button class="btn btn-primary btn-block job-apply-btn" onclick="openApplyModal(${j.id}, '${escH(j.title).replace(/'/g, "\\'")}')">
+                    <i class="fas fa-paper-plane"></i> Apply Now
+                </button>
+            </div>`;
+        }).join('');
+    }
+
+    function escH(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = String(str);
+        return div.innerHTML;
+    }
+
+    // ===== APPLY MODAL =====
+    const applyOverlay = document.getElementById('applyOverlay');
+    const applyClose = document.getElementById('applyClose');
+
+    function openApplyModal(jobId, jobTitle) {
+        document.getElementById('applyJobId').value = jobId;
+        document.getElementById('applyJobTitle').textContent = jobTitle;
+        document.getElementById('applyStep1').style.display = 'block';
+        document.getElementById('applyStep2').style.display = 'none';
+        document.getElementById('applyForm').reset();
+        document.getElementById('expYearsField').style.display = 'none';
+        removeResume();
+        resetErrors();
+        validateApplyForm();
+        applyOverlay.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeApplyModal() {
+        applyOverlay.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+
+    applyClose.addEventListener('click', closeApplyModal);
+    applyOverlay.addEventListener('click', (e) => { if (e.target === applyOverlay) closeApplyModal(); });
+
+    function toggleExpYears() {
+        const expType = document.getElementById('applyExpType').value;
+        const field = document.getElementById('expYearsField');
+        field.style.display = expType === 'experienced' ? 'block' : 'none';
+        if (expType !== 'experienced') document.getElementById('applyExpYears').value = '';
+    }
+
+    // ===== RESUME UPLOAD =====
+    function handleResumeUpload(input) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            if (file.size > 5 * 1024 * 1024) {
+                showError('err_resume', 'File size must be under 5MB');
+                input.value = '';
+                return;
+            }
+            document.getElementById('resumePlaceholder').style.display = 'none';
+            document.getElementById('resumeUploaded').style.display = 'flex';
+            document.getElementById('resumeFileName').textContent = file.name;
+            clearError('err_resume');
+        }
+    }
+
+    function removeResume() {
+        document.getElementById('applyResume').value = '';
+        document.getElementById('resumePlaceholder').style.display = 'flex';
+        document.getElementById('resumeUploaded').style.display = 'none';
+        document.getElementById('resumeFileName').textContent = '';
+        validateApplyForm();
+    }
+
+    // Drag & drop
+    const uploadArea = document.getElementById('resumeUploadArea');
+    uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+    uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file) {
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (['pdf', 'doc', 'docx'].includes(ext)) {
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                document.getElementById('applyResume').files = dt.files;
+                handleResumeUpload(document.getElementById('applyResume'));
+                validateApplyForm();
+            } else {
+                showError('err_resume', 'Only PDF, DOC, DOCX files allowed');
+            }
+        }
+    });
+
+    // ===== FORM VALIDATION =====
+    function validateApplyForm() {
+        const firstName = document.getElementById('applyFirstName').value.trim();
+        const lastName = document.getElementById('applyLastName').value.trim();
+        const email = document.getElementById('applyEmail').value.trim();
+        const expType = document.getElementById('applyExpType').value;
+        const expYears = document.getElementById('applyExpYears').value;
+        const resume = document.getElementById('applyResume').files[0];
+
+        let completed = 0;
+        const total = expType === 'experienced' ? 6 : 5;
+
+        if (firstName) { completed++; clearError('err_firstName'); } 
+        if (lastName) { completed++; clearError('err_lastName'); }
+        if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { completed++; clearError('err_email'); }
+        else if (email) { showError('err_email', 'Enter a valid email address'); }
+        if (expType) { completed++; clearError('err_expType'); }
+        if (expType === 'experienced') {
+            if (expYears && parseFloat(expYears) >= 0.5) { completed++; clearError('err_expYears'); }
+        }
+        if (resume) { completed++; clearError('err_resume'); }
+
+        const pct = Math.round((completed / total) * 100);
+        document.getElementById('progressFill').style.width = pct + '%';
+        document.getElementById('progressText').textContent = `${completed} of ${total} required fields completed`;
+
+        const isValid = completed === total;
+        document.getElementById('applySubmitBtn').disabled = !isValid;
+        return isValid;
+    }
+
+    function showError(id, msg) { const el = document.getElementById(id); if (el) el.textContent = msg; }
+    function clearError(id) { const el = document.getElementById(id); if (el) el.textContent = ''; }
+    function resetErrors() {
+        document.querySelectorAll('.field-error').forEach(el => el.textContent = '');
+    }
+
+    // ===== SUBMIT APPLICATION =====
+    document.getElementById('applyForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!validateApplyForm()) return;
+
+        const btn = document.getElementById('applySubmitBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+
+        const formData = new FormData();
+        formData.append('first_name', document.getElementById('applyFirstName').value.trim());
+        formData.append('last_name', document.getElementById('applyLastName').value.trim());
+        formData.append('email', document.getElementById('applyEmail').value.trim());
+        formData.append('phone', document.getElementById('applyPhone').value.trim());
+        formData.append('experience_type', document.getElementById('applyExpType').value);
+        formData.append('experience_years', document.getElementById('applyExpYears').value || '0');
+        formData.append('cover_note', document.getElementById('applyCoverNote').value.trim());
+        formData.append('resume', document.getElementById('applyResume').files[0]);
+
+        const jobId = document.getElementById('applyJobId').value;
+
+        try {
+            const res = await fetch(`/api/careers/${jobId}/apply`, { method: 'POST', body: formData });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Submission failed');
+
+            document.getElementById('successEmail').textContent = document.getElementById('applyEmail').value;
+            document.getElementById('applyStep1').style.display = 'none';
+            document.getElementById('applyStep2').style.display = 'block';
+        } catch (err) {
+            alert(err.message);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Application';
+        }
+    });
+
+    // Init
+    loadJobs();
+    </script>
+</body>
+</html>

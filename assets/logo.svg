@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 90" fill="none">
+  <defs>
+    <!-- Metallic chrome shield gradients -->
+    <linearGradient id="shieldOuter" x1="30" y1="0" x2="30" y2="82" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#e8ecf0"/>
+      <stop offset="20%" stop-color="#d0d6de"/>
+      <stop offset="45%" stop-color="#b8c0cb"/>
+      <stop offset="70%" stop-color="#a0aab8"/>
+      <stop offset="100%" stop-color="#8892a2"/>
+    </linearGradient>
+    <linearGradient id="shieldInner" x1="30" y1="4" x2="30" y2="76" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#f5f7fa"/>
+      <stop offset="15%" stop-color="#e6eaef"/>
+      <stop offset="50%" stop-color="#cdd4dc"/>
+      <stop offset="85%" stop-color="#b0bac6"/>
+      <stop offset="100%" stop-color="#9aa6b4"/>
+    </linearGradient>
+    <!-- Chrome highlight (left side reflection) -->
+    <linearGradient id="shieldReflect" x1="10" y1="10" x2="55" y2="70" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.6"/>
+      <stop offset="30%" stop-color="#ffffff" stop-opacity="0.2"/>
+      <stop offset="60%" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.05"/>
+    </linearGradient>
+    <!-- Shadow/depth on shield right -->
+    <linearGradient id="shieldShadow" x1="50" y1="10" x2="15" y2="70" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="70%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.08"/>
+    </linearGradient>
+    <!-- Blue gradient for P figure -->
+    <linearGradient id="pFigure" x1="22" y1="12" x2="38" y2="68" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#5bb8e8"/>
+      <stop offset="30%" stop-color="#3a9ad6"/>
+      <stop offset="60%" stop-color="#2580c0"/>
+      <stop offset="100%" stop-color="#1a6aa8"/>
+    </linearGradient>
+    <!-- Dot gradient -->
+    <linearGradient id="dotFill" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4db4e6"/>
+      <stop offset="100%" stop-color="#1a78b8"/>
+    </linearGradient>
+    <!-- Dark text -->
+    <linearGradient id="primeText" x1="0" y1="20" x2="0" y2="55" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2e4058"/>
+      <stop offset="100%" stop-color="#1c2e42"/>
+    </linearGradient>
+    <!-- Blue axis text -->
+    <linearGradient id="axisText" x1="0" y1="18" x2="0" y2="52" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3aa0d8"/>
+      <stop offset="50%" stop-color="#2882c0"/>
+      <stop offset="100%" stop-color="#1a68a8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ===== SHIELD ===== -->
+  <g transform="translate(2, 3)">
+    <!-- Shield outer edge (darker border) -->
+    <path d="M8,8 C8,4 12,1 17,1 L49,1 C54,1 58,4 58,8 L58,42 C58,56 34,78 33,79 C32,78 8,56 8,42 Z"
+          fill="url(#shieldOuter)"/>
+    <!-- Shield inner face (lighter chrome) -->
+    <path d="M10,9 C10,5.5 13,3 17,3 L49,3 C53,3 56,5.5 56,9 L56,41 C56,54 34,74 33,75 C32,74 10,54 10,41 Z"
+          fill="url(#shieldInner)"/>
+    <!-- Chrome highlight reflection -->
+    <path d="M10,9 C10,5.5 13,3 17,3 L49,3 C53,3 56,5.5 56,9 L56,41 C56,54 34,74 33,75 C32,74 10,54 10,41 Z"
+          fill="url(#shieldReflect)"/>
+    <!-- Subtle shadow depth -->
+    <path d="M10,9 C10,5.5 13,3 17,3 L49,3 C53,3 56,5.5 56,9 L56,41 C56,54 34,74 33,75 C32,74 10,54 10,41 Z"
+          fill="url(#shieldShadow)"/>
+    <!-- Fine outer stroke -->
+    <path d="M8,8 C8,4 12,1 17,1 L49,1 C54,1 58,4 58,8 L58,42 C58,56 34,78 33,79 C32,78 8,56 8,42 Z"
+          fill="none" stroke="#a0aab6" stroke-width="0.8" opacity="0.5"/>
+
+    <!-- ===== STYLIZED P / FIGURE ===== -->
+    <!--
+      The P is formed by:
+      - Vertical stroke (body/left)
+      - Curved top (the P bowl)
+      - A right arm reaching upward-right (like a person celebrating)
+      - Three ascending dots to upper right
+    -->
+
+    <!-- P vertical stroke (body) -->
+    <path d="M25,22 L25,64"
+          stroke="url(#pFigure)" stroke-width="5.5" stroke-linecap="round"/>
+
+    <!-- P bowl curve (top of P, sweeps right and back) -->
+    <path d="M25,22 C25,22 26,18 30,16 C34,14 40,15 42,18 C44,21 44,26 42,29 C40,32 36,33 32,33 L25,33"
+          fill="none" stroke="url(#pFigure)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Right arm reaching upward (from the P bowl area, arching up-right) -->
+    <path d="M38,20 C40,16 43,12 47,9"
+          fill="none" stroke="url(#pFigure)" stroke-width="4" stroke-linecap="round"/>
+
+    <!-- Left small kick/leg detail -->
+    <path d="M25,58 C22,62 20,64 18,66"
+          fill="none" stroke="url(#pFigure)" stroke-width="3.5" stroke-linecap="round" opacity="0.85"/>
+
+    <!-- ===== THREE ASCENDING DOTS ===== -->
+    <!-- Bottom dot (near P curve) -->
+    <circle cx="44" cy="29" r="2.8" fill="url(#dotFill)" opacity="0.65"/>
+    <!-- Middle dot -->
+    <circle cx="48" cy="19" r="3.2" fill="url(#dotFill)" opacity="0.8"/>
+    <!-- Top dot (largest/brightest, at tip of reaching arm) -->
+    <circle cx="50" cy="8" r="3.6" fill="url(#dotFill)" opacity="0.95"/>
+  </g>
+
+  <!-- ===== COMPANY NAME ===== -->
+  <g transform="translate(76, 4)">
+    <!-- "Prime" in dark navy -->
+    <text x="0" y="42"
+          font-family="'Poppins', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+          font-size="36" font-weight="700" fill="url(#primeText)"
+          letter-spacing="-0.5">Prime</text>
+    <!-- "Axis" in blue -->
+    <text x="114" y="42"
+          font-family="'Poppins', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+          font-size="36" font-weight="700" fill="url(#axisText)"
+          letter-spacing="-0.5">Axis</text>
+
+    <!-- "IT SOLUTIONS" subtitle in gray -->
+    <text x="2" y="62"
+          font-family="'Inter', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+          font-size="13.5" font-weight="600" fill="#8892a2"
+          letter-spacing="5">IT SOLUTIONS</text>
+  </g>
+</svg>

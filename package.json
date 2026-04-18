@@ -1,0 +1,11 @@
+{
+  "name": "primeaxis-hr-portal",
+  "version": "1.0.0",
+  "description": "PrimeAxis IT - HR & Employee Management Portal",
+  "scripts": {
+    "start": "node server/app.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

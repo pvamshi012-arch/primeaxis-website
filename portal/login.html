@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrimeAxis IT — Employee Portal Login</title>
+    <link rel="icon" type="image/svg+xml" href="../assets/logo-icon.svg">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(160deg, #050810 0%, #0a1225 25%, #101d3a 50%, #0c1530 75%, #080d1a 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        body::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 500px 500px at 20% 40%, rgba(79, 110, 247, 0.12) 0%, transparent 70%),
+                radial-gradient(ellipse 400px 400px at 80% 60%, rgba(168, 85, 247, 0.08) 0%, transparent 60%);
+        }
+        .login-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 440px;
+            padding: 20px;
+        }
+        .login-card {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 48px 40px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4);
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+        .login-header img {
+            height: 50px;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 12px rgba(79, 110, 247, 0.3));
+        }
+        .login-header h1 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.5rem;
+            color: #fff;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .login-header p {
+            color: rgba(255,255,255,0.5);
+            font-size: 0.9rem;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            color: rgba(255,255,255,0.7);
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .input-wrapper {
+            position: relative;
+        }
+        .input-wrapper i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255,255,255,0.3);
+            font-size: 0.95rem;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 14px 14px 14px 42px;
+            background: rgba(255,255,255,0.06);
+            border: 1.5px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #4f6ef7;
+            background: rgba(79, 110, 247, 0.06);
+            box-shadow: 0 0 0 4px rgba(79, 110, 247, 0.1);
+        }
+        .form-group input::placeholder {
+            color: rgba(255,255,255,0.25);
+        }
+        .btn-login {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #4f6ef7, #00d4ff);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(79, 110, 247, 0.4);
+        }
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .error-msg {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+        }
+        .error-msg.show { display: flex; }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 24px;
+            color: rgba(255,255,255,0.4);
+            font-size: 0.85rem;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        .back-link:hover { color: #4f6ef7; }
+        .spinner { display: none; width: 18px; height: 18px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 0.6s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <img src="../assets/logo-white.svg" alt="PrimeAxis IT">
+                <h1>Employee Portal</h1>
+                <p>Sign in with your credentials</p>
+            </div>
+            <div id="error" class="error-msg">
+                <i class="fas fa-exclamation-circle"></i>
+                <span id="errorText"></span>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="email" placeholder="you@primeaxisit.com" required autocomplete="email">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="password" placeholder="Enter your password" required autocomplete="current-password">
+                    </div>
+                </div>
+                <button type="submit" class="btn-login" id="loginBtn">
+                    <span>Sign In</span>
+                    <div class="spinner" id="spinner"></div>
+                    <i class="fas fa-arrow-right" id="arrowIcon"></i>
+                </button>
+            </form>
+            <a href="/" class="back-link"><i class="fas fa-arrow-left"></i> Back to Website</a>
+        </div>
+    </div>
+    <script>
+        // Redirect if already logged in
+        if (localStorage.getItem('primeaxis_token')) {
+            window.location.href = '/portal/';
+        }
+
+        const form = document.getElementById('loginForm');
+        const errorDiv = document.getElementById('error');
+        const errorText = document.getElementById('errorText');
+        const loginBtn = document.getElementById('loginBtn');
+        const spinner = document.getElementById('spinner');
+        const arrowIcon = document.getElementById('arrowIcon');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorDiv.classList.remove('show');
+            loginBtn.disabled = true;
+            spinner.style.display = 'block';
+            arrowIcon.style.display = 'none';
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: document.getElementById('email').value,
+                        password: document.getElementById('password').value
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Login failed');
+
+                localStorage.setItem('primeaxis_token', data.token);
+                localStorage.setItem('primeaxis_user', JSON.stringify(data.user));
+                window.location.href = '/portal/';
+            } catch (err) {
+                errorText.textContent = err.message;
+                errorDiv.classList.add('show');
+            } finally {
+                loginBtn.disabled = false;
+                spinner.style.display = 'none';
+                arrowIcon.style.display = '';
+            }
+        });
+    </script>
+</body>
+</html>

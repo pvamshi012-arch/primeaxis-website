@@ -1,0 +1,20 @@
+{
+  "name": "primeaxis-hr-portal",
+  "version": "1.0.0",
+  "description": "PrimeAxis IT - HR & Employee Management Portal",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "seed": "node seed.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.0.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "express-rate-limit": "^8.3.2",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.1.1"
+  }
+}

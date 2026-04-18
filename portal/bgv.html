@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrimeAxis IT — Background Verification</title>
+    <link rel="icon" type="image/svg+xml" href="../assets/logo-icon.svg">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/bgv.css">
+</head>
+<body>
+    <!-- Login Screen -->
+    <div class="bgv-login-screen" id="loginScreen">
+        <div class="bgv-login-card">
+            <div class="bgv-login-logo">
+                <img src="../assets/logo.svg" alt="PrimeAxis IT">
+                <h1>Background Verification</h1>
+                <p>PrimeAxis IT Solutions</p>
+            </div>
+            <div class="bgv-login-form">
+                <div class="form-group">
+                    <label><i class="fas fa-envelope"></i> Email</label>
+                    <input type="email" id="loginEmail" class="form-control" placeholder="Your email address">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-key"></i> Temporary Password</label>
+                    <input type="password" id="loginPassword" class="form-control" placeholder="Password from HR">
+                </div>
+                <button class="btn btn-primary" id="loginBtn" onclick="bgvLogin()">
+                    <i class="fas fa-sign-in-alt"></i> Login & Start
+                </button>
+                <div class="bgv-login-error" id="loginError"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wizard Screen -->
+    <div class="bgv-wizard-screen" id="wizardScreen" style="display:none">
+        <!-- Top Bar -->
+        <header class="bgv-topbar">
+            <div class="bgv-topbar-left">
+                <img src="../assets/logo-white.svg" alt="PrimeAxis IT" class="bgv-logo">
+                <span>Background Verification</span>
+            </div>
+            <div class="bgv-topbar-right">
+                <span id="candidateGreeting"></span>
+            </div>
+        </header>
+
+        <!-- Progress Bar -->
+        <div class="bgv-progress-container">
+            <div class="bgv-progress-bar">
+                <div class="bgv-progress-fill" id="progressFill"></div>
+            </div>
+            <div class="bgv-steps" id="stepsNav"></div>
+        </div>
+
+        <!-- Wizard Content -->
+        <div class="bgv-wizard-content" id="wizardContent">
+            <!-- Injected by JS -->
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="bgv-wizard-nav">
+            <button class="btn btn-secondary" id="prevBtn" onclick="prevStep()"><i class="fas fa-arrow-left"></i> Previous</button>
+            <div class="step-indicator" id="stepIndicator"></div>
+            <button class="btn btn-primary" id="nextBtn" onclick="nextStep()">Next <i class="fas fa-arrow-right"></i></button>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="js/bgv.js"></script>
+</body>
+</html>
