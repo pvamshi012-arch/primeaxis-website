@@ -388,6 +388,51 @@ img {
     border-radius: 8px;
 }
 
+.logo-icon-img {
+    height: 38px;
+    width: 38px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 2px solid rgba(79, 110, 247, 0.3);
+}
+
+.logo-text {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: -0.5px;
+}
+
+.logo-highlight {
+    background: linear-gradient(135deg, #4f6ef7, #00d2ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+}
+
+.footer-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+}
+
+.footer-logo-icon {
+    height: 40px;
+    width: 40px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 2px solid rgba(79, 110, 247, 0.3);
+}
+
 .logo-icon {
     width: 42px;
     height: 42px;
