@@ -79,6 +79,9 @@ app.use('/api/', apiLimiter);
 
 // Serve main website from parent directory (exclude dotfiles)
 app.use(express.static(path.join(__dirname, '..'), { dotfiles: 'deny' }));
+// Health check for Railway
+app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
+
 // Serve portal files
 app.use('/portal', express.static(path.join(__dirname, '..', 'portal'), { dotfiles: 'deny' }));
 // Serve uploaded documents behind auth
