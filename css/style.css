@@ -2488,33 +2488,35 @@ img {
 }
 
 .tech-category {
-    background: var(--white);
-    border: 1px solid var(--light-gray);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(79, 110, 247, 0.15);
     border-radius: 16px;
     padding: 2rem;
     transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
 }
 
 .tech-category:hover {
     transform: translateY(-4px);
-    box-shadow: 0 15px 35px rgba(79, 110, 247, 0.1);
+    box-shadow: 0 15px 35px rgba(79, 110, 247, 0.15);
     border-color: var(--secondary);
+    background: rgba(79, 110, 247, 0.06);
 }
 
 .tech-category h4 {
     font-size: 1.1rem;
     font-weight: 700;
-    color: var(--primary);
+    color: #ffffff;
     margin-bottom: 1.25rem;
     padding-bottom: 0.75rem;
-    border-bottom: 2px solid var(--light-gray);
+    border-bottom: 2px solid rgba(79, 110, 247, 0.2);
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
 
 .tech-category h4 i {
-    color: var(--secondary);
+    color: var(--accent);
     font-size: 1.2rem;
 }
 
@@ -2527,12 +2529,12 @@ img {
 .tech-tag {
     display: inline-block;
     padding: 0.4rem 1rem;
-    background: linear-gradient(135deg, rgba(79, 110, 247, 0.06), rgba(168, 85, 247, 0.04));
-    color: var(--secondary);
+    background: rgba(79, 110, 247, 0.1);
+    color: #a5b4fc;
     border-radius: 20px;
     font-size: 0.85rem;
     font-weight: 600;
-    border: 1px solid rgba(79, 110, 247, 0.12);
+    border: 1px solid rgba(79, 110, 247, 0.2);
     transition: all 0.3s ease;
 }
 
