@@ -339,6 +339,7 @@ img {
     height: 48px;
     width: auto;
     object-fit: contain;
+    border-radius: 10px;
 }
 
 @keyframes spin {
@@ -384,6 +385,7 @@ img {
     height: 44px;
     width: auto;
     object-fit: contain;
+    border-radius: 8px;
 }
 
 .logo-icon {
@@ -1929,6 +1931,7 @@ img {
     height: 46px;
     width: auto;
     object-fit: contain;
+    border-radius: 8px;
 }
 
 .footer-desc {
