@@ -841,7 +841,7 @@ function renderOfferLetter(o) {
 
     const letterheadFull = `<div class="letterhead">
         <div class="lh-left">
-            <img src="../assets/logo/2.png" alt="PrimeAxis IT" class="lh-logo">
+            <img src="../assets/logo-icon-new.svg" alt="PrimeAxis IT" class="lh-logo">
             <div class="lh-company">
                 <h1>PrimeAxis IT Solutions</h1>
                 <p>Innovative Technology Services</p>
@@ -857,7 +857,7 @@ function renderOfferLetter(o) {
     </div>`;
 
     const letterheadMini = (pg) => `<div class="letterhead-mini">
-        <img src="../assets/logo/2.png" alt="PrimeAxis IT" style="height:28px">
+        <img src="../assets/logo-full-new.svg" alt="PrimeAxis IT" style="height:28px">
         <span>Ref: ${esc(o.reference_no)} | Page ${pg}</span>
     </div>`;
 
@@ -1364,7 +1364,7 @@ window.viewPayslip = async (id) => {
 function renderPayslip(ps, emp, earn, ded, empContrib) {
     return `<div class="payslip-preview">
         <div class="ps-company-header">
-            <img src="../assets/logo/2.png" alt="PrimeAxis IT" style="height:40px">
+            <img src="../assets/logo-full-new.svg" alt="PrimeAxis IT" style="height:40px">
             <div>
                 <h2>PrimeAxis IT Solutions</h2>
                 <p>Plot No: 207, Road No: 8, Vasanth Nagar, Near JNTU Metro Station, KPHB</p>
@@ -1969,7 +1969,7 @@ function renderRelievingLetter(r) {
         <div class="letter-page">
             <div class="letterhead">
                 <div class="lh-left">
-                    <img src="../assets/logo/2.png" alt="PrimeAxis IT" class="lh-logo">
+                    <img src="../assets/logo-icon-new.svg" alt="PrimeAxis IT" class="lh-logo">
                     <div class="lh-company">
                         <h1>PrimeAxis IT Solutions</h1>
                         <p>Innovative Technology Services</p>

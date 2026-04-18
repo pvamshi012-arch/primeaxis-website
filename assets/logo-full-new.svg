@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 80" fill="none">
+  <defs>
+    <linearGradient id="blueG" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a3a8f"/>
+      <stop offset="50%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#0ea5e9"/>
+    </linearGradient>
+    <linearGradient id="lightG" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#93c5fd"/>
+      <stop offset="100%" stop-color="#ffffff"/>
+    </linearGradient>
+    <linearGradient id="dotG" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+    <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+  </defs>
+  <!-- P Icon -->
+  <g transform="translate(4, 4) scale(0.6)">
+    <path d="M28 18 L28 102 L42 102 L42 68 L58 68 C78 68 92 56 92 43 C92 30 78 18 58 18 Z" fill="url(#blueG)"/>
+    <path d="M42 30 L58 30 C71 30 79 36 79 43 C79 50 71 56 58 56 L42 56 Z" fill="url(#lightG)" opacity="0.9"/>
+    <path d="M42 78 C42 78 55 88 75 82 C85 79 92 72 96 65" stroke="url(#blueG)" stroke-width="5" stroke-linecap="round" fill="none"/>
+    <circle cx="98" cy="22" r="9" fill="url(#dotG)"/>
+  </g>
+  <!-- PrimeAxis text -->
+  <text x="78" y="38" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="30" fill="#ffffff">Prime</text>
+  <text x="180" y="38" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="30" fill="url(#textGrad)">Axis</text>
+  <!-- IT SOLUTIONS subtitle -->
+  <text x="78" y="58" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="13" letter-spacing="4" fill="#64748b">I T   S O L U T I O N S</text>
+</svg>
