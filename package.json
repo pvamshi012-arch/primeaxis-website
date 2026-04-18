@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "PrimeAxis IT - HR & Employee Management Portal",
   "scripts": {
+    "build": "echo 'No build step required'",
     "start": "node server/app.js"
   },
   "engines": {
