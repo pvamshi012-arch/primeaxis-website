@@ -123,9 +123,11 @@ function toast(msg, type = 'success') {
 }
 
 // ===== MODAL =====
-function openModal(title, html) {
+function openModal(title, html, opts = {}) {
     modalTitle.textContent = title;
     modalBody.innerHTML = html;
+    const modalEl = modalOverlay.querySelector('.modal');
+    if (opts.wide) modalEl.classList.add('modal-wide'); else modalEl.classList.remove('modal-wide');
     modalOverlay.classList.add('show');
 }
 function closeModal() { modalOverlay.classList.remove('show'); }
@@ -1055,25 +1057,89 @@ async function pageTimesheets() {
     pageTitle.textContent = 'Timesheets';
     const ts = await apiGet('/timesheets');
     const isMgr = ['admin', 'manager'].includes(u.role);
+
+    const parsedTs = ts.map(t => {
+        let entries = [];
+        try { entries = JSON.parse(t.entries); } catch(e) {}
+        return { ...t, parsedEntries: entries };
+    });
+
     content.innerHTML = `
         <div class="table-card">
             <div class="table-header">
                 <h3><i class="fas fa-clock"></i> Timesheets (${ts.length})</h3>
             </div>
-            <div class="table-wrapper"><table>
-                <thead><tr><th>Employee</th><th>Week</th><th>Hours</th><th>Status</th>${isMgr ? '<th>Actions</th>' : ''}</tr></thead>
-                <tbody>
-                    ${ts.length === 0 ? '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--p-text-muted)">No timesheets</td></tr>' : ts.map(t => `<tr>
-                        <td><strong>${esc(t.employee_name)}</strong> <span style="color:var(--p-text-muted);font-size:0.8rem">${esc(t.employee_code || '')}</span></td>
-                        <td>${formatDate(t.week_start)} — ${formatDate(t.week_end)}</td>
-                        <td>${t.total_hours}h</td>
-                        <td>${statusBadge(t.status)}</td>
-                        ${isMgr ? `<td>
-                            ${t.status === 'submitted' ? `<button class="btn btn-sm btn-success" onclick="approveTimesheet(${t.id})"><i class="fas fa-check"></i></button><button class="btn btn-sm btn-danger" onclick="rejectTimesheet(${t.id})"><i class="fas fa-times"></i></button>` : ''}
-                        </td>` : ''}
-                    </tr>`).join('')}
-                </tbody>
-            </table></div>
+            ${ts.length === 0 ? '<div style="text-align:center;padding:60px 20px;color:var(--p-text-muted)">No timesheets</div>' : parsedTs.map(t => {
+                const weekStart = new Date(t.week_start + 'T00:00:00');
+                const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+                const dayDates = days.map((_, i) => {
+                    const d = new Date(weekStart);
+                    d.setDate(weekStart.getDate() + i);
+                    return d;
+                });
+                const dailyTotals = [0,0,0,0,0,0,0];
+                t.parsedEntries.forEach(entry => {
+                    if (entry.daily) {
+                        entry.daily.forEach((h, i) => { dailyTotals[i] += (parseFloat(h) || 0); });
+                    } else if (entry.hours) {
+                        const hrs = parseFloat(entry.hours) || 0;
+                        const perDay = Math.round((hrs / 5) * 100) / 100;
+                        for (let i = 0; i < 5; i++) dailyTotals[i] += perDay;
+                    }
+                });
+                const grandTotal = dailyTotals.reduce((s, h) => s + h, 0);
+
+                return `
+                <div class="ts-week-card" style="margin:16px;border:1px solid var(--p-border);border-radius:12px;overflow:hidden">
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:linear-gradient(135deg,rgba(0,210,255,0.08),rgba(88,86,214,0.08));border-bottom:1px solid var(--p-border);flex-wrap:wrap;gap:8px">
+                        <div>
+                            <strong>${esc(t.employee_name)}</strong> <span style="color:var(--p-text-muted);font-size:0.8rem">${esc(t.employee_code || '')}</span>
+                            <span style="margin-left:12px;font-size:0.85rem;color:var(--p-text-muted)"><i class="fas fa-calendar-week" style="color:var(--p-cyan);margin-right:4px"></i>${formatDate(t.week_start)} — ${formatDate(t.week_end)}</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:10px">
+                            ${statusBadge(t.status)}
+                            ${isMgr && t.status === 'submitted' ? `<button class="btn btn-sm btn-success" onclick="approveTimesheet(${t.id})"><i class="fas fa-check"></i> Approve</button><button class="btn btn-sm btn-danger" onclick="rejectTimesheet(${t.id})"><i class="fas fa-times"></i> Reject</button>` : ''}
+                        </div>
+                    </div>
+                    ${t.reject_reason ? `<div style="padding:8px 18px;background:rgba(255,59,48,0.08);color:var(--p-red);font-size:0.82rem"><i class="fas fa-exclamation-circle"></i> ${esc(t.reject_reason)}</div>` : ''}
+                    <div style="overflow-x:auto">
+                        <table class="ts-grid" style="width:100%;border-collapse:collapse;font-size:0.85rem">
+                            <thead>
+                                <tr style="background:var(--p-sidebar)">
+                                    <th style="text-align:left;padding:10px 14px;min-width:140px;border-right:1px solid var(--p-border)">Project / Task</th>
+                                    ${days.map((day, i) => {
+                                        const d = dayDates[i];
+                                        const isWeekend = i >= 5;
+                                        return `<th style="text-align:center;padding:10px 8px;min-width:70px;${isWeekend ? 'opacity:0.5;' : ''}border-right:1px solid var(--p-border)">
+                                            <div style="font-weight:600;color:${isWeekend ? 'var(--p-text-muted)' : 'var(--p-cyan)'}">${day}</div>
+                                            <div style="font-size:0.75rem;color:var(--p-text-muted);font-weight:400">${String(d.getDate()).padStart(2,'0')}-${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]}</div>
+                                        </th>`;
+                                    }).join('')}
+                                    <th style="text-align:center;padding:10px 8px;min-width:70px;font-weight:700;color:var(--p-cyan)">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${t.parsedEntries.map(entry => {
+                                    const daily = entry.daily || (entry.hours ? [0,0,0,0,0,0,0].map((_, i) => i < 5 ? Math.round((parseFloat(entry.hours)/5)*100)/100 : 0) : [0,0,0,0,0,0,0]);
+                                    const rowTotal = daily.reduce((s, h) => s + (parseFloat(h) || 0), 0);
+                                    return `<tr style="border-top:1px solid var(--p-border)">
+                                        <td style="padding:10px 14px;font-weight:500;border-right:1px solid var(--p-border)"><i class="fas fa-project-diagram" style="color:var(--p-purple);margin-right:6px;font-size:0.75rem"></i>${esc(entry.project || 'General')}</td>
+                                        ${daily.map((h, i) => `<td style="text-align:center;padding:10px 8px;${i >= 5 ? 'opacity:0.5;' : ''}border-right:1px solid var(--p-border);${parseFloat(h) > 0 ? 'color:var(--p-text)' : 'color:var(--p-text-muted)'}">${parseFloat(h) ? parseFloat(h).toFixed(2) : '—'}</td>`).join('')}
+                                        <td style="text-align:center;padding:10px 8px;font-weight:700;color:var(--p-cyan)">${rowTotal.toFixed(2)}</td>
+                                    </tr>`;
+                                }).join('')}
+                            </tbody>
+                            <tfoot>
+                                <tr style="border-top:2px solid var(--p-cyan);background:rgba(0,210,255,0.04)">
+                                    <td style="padding:10px 14px;font-weight:700;border-right:1px solid var(--p-border)"><i class="fas fa-calculator" style="color:var(--p-green);margin-right:6px;font-size:0.75rem"></i>Total Hours</td>
+                                    ${dailyTotals.map((h, i) => `<td style="text-align:center;padding:10px 8px;font-weight:700;${i >= 5 ? 'opacity:0.5;' : ''}border-right:1px solid var(--p-border);color:${h > 0 ? 'var(--p-green)' : 'var(--p-text-muted)'}">${h ? h.toFixed(2) : '—'}</td>`).join('')}
+                                    <td style="text-align:center;padding:10px 8px;font-weight:800;font-size:1rem;color:var(--p-green)">${grandTotal.toFixed(2)}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>`;
+            }).join('')}
         </div>`;
 }
 
@@ -1475,52 +1541,235 @@ async function pageMyOffer() {
 async function pageMyTimesheets() {
     pageTitle.textContent = 'My Timesheets';
     const ts = await apiGet('/my/timesheets');
+
+    // Parse entries for each timesheet to show daily breakdown
+    const parsedTs = ts.map(t => {
+        let entries = [];
+        try { entries = JSON.parse(t.entries); } catch(e) {}
+        return { ...t, parsedEntries: entries };
+    });
+
     content.innerHTML = `
         <div class="table-card">
             <div class="table-header">
                 <h3><i class="fas fa-clock"></i> My Timesheets</h3>
                 <button class="btn btn-primary" onclick="showCreateTimesheetModal()"><i class="fas fa-plus"></i> New Timesheet</button>
             </div>
-            <div class="table-wrapper"><table>
-                <thead><tr><th>Week</th><th>Hours</th><th>Status</th><th>Actions</th></tr></thead>
-                <tbody>
-                    ${ts.length === 0 ? '<tr><td colspan="4" style="text-align:center;padding:40px;color:var(--p-text-muted)">No timesheets yet. Create your first one!</td></tr>' : ts.map(t => `<tr>
-                        <td>${formatDate(t.week_start)} — ${formatDate(t.week_end)}</td>
-                        <td>${t.total_hours}h</td>
-                        <td>${statusBadge(t.status)}${t.reject_reason ? '<br><small style="color:var(--p-red)">'+esc(t.reject_reason)+'</small>' : ''}</td>
-                        <td>${t.status === 'draft' ? `<button class="btn btn-sm btn-primary" onclick="submitTimesheet(${t.id})"><i class="fas fa-paper-plane"></i> Submit</button>` : ''}</td>
-                    </tr>`).join('')}
-                </tbody>
-            </table></div>
+            ${ts.length === 0 ? '<div style="text-align:center;padding:60px 20px;color:var(--p-text-muted)"><i class="fas fa-clock" style="font-size:2.5rem;margin-bottom:12px;display:block;opacity:0.3"></i>No timesheets yet. Create your first one!</div>' : parsedTs.map(t => {
+                const weekStart = new Date(t.week_start + 'T00:00:00');
+                const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+                const dayDates = days.map((_, i) => {
+                    const d = new Date(weekStart);
+                    d.setDate(weekStart.getDate() + i);
+                    return d;
+                });
+                // Build daily hours from entries
+                const dailyTotals = [0,0,0,0,0,0,0];
+                t.parsedEntries.forEach(entry => {
+                    if (entry.daily) {
+                        entry.daily.forEach((h, i) => { dailyTotals[i] += (parseFloat(h) || 0); });
+                    } else if (entry.hours) {
+                        // Legacy: distribute evenly across weekdays
+                        const hrs = parseFloat(entry.hours) || 0;
+                        const perDay = Math.round((hrs / 5) * 100) / 100;
+                        for (let i = 0; i < 5; i++) dailyTotals[i] += perDay;
+                    }
+                });
+                const grandTotal = dailyTotals.reduce((s, h) => s + h, 0);
+
+                return `
+                <div class="ts-week-card" style="margin:16px;border:1px solid var(--p-border);border-radius:12px;overflow:hidden">
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:linear-gradient(135deg,rgba(0,210,255,0.08),rgba(88,86,214,0.08));border-bottom:1px solid var(--p-border)">
+                        <div>
+                            <span style="font-weight:600;font-size:0.95rem"><i class="fas fa-calendar-week" style="color:var(--p-cyan);margin-right:6px"></i>${formatDate(t.week_start)} — ${formatDate(t.week_end)}</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:10px">
+                            ${statusBadge(t.status)}
+                            ${t.status === 'draft' ? `<button class="btn btn-sm btn-primary" onclick="submitTimesheet(${t.id})"><i class="fas fa-paper-plane"></i> Submit</button>` : ''}
+                        </div>
+                    </div>
+                    ${t.reject_reason ? `<div style="padding:8px 18px;background:rgba(255,59,48,0.08);color:var(--p-red);font-size:0.82rem"><i class="fas fa-exclamation-circle"></i> Rejected: ${esc(t.reject_reason)}</div>` : ''}
+                    <div style="overflow-x:auto">
+                        <table class="ts-grid" style="width:100%;border-collapse:collapse;font-size:0.85rem">
+                            <thead>
+                                <tr style="background:var(--p-sidebar)">
+                                    <th style="text-align:left;padding:10px 14px;min-width:140px;border-right:1px solid var(--p-border)">Project / Task</th>
+                                    ${days.map((day, i) => {
+                                        const d = dayDates[i];
+                                        const isWeekend = i >= 5;
+                                        return `<th style="text-align:center;padding:10px 8px;min-width:70px;${isWeekend ? 'opacity:0.5;' : ''}border-right:1px solid var(--p-border)">
+                                            <div style="font-weight:600;color:${isWeekend ? 'var(--p-text-muted)' : 'var(--p-cyan)'}">${day}</div>
+                                            <div style="font-size:0.75rem;color:var(--p-text-muted);font-weight:400">${String(d.getDate()).padStart(2,'0')}-${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]}</div>
+                                        </th>`;
+                                    }).join('')}
+                                    <th style="text-align:center;padding:10px 8px;min-width:70px;font-weight:700;color:var(--p-cyan)">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${t.parsedEntries.map(entry => {
+                                    const daily = entry.daily || (entry.hours ? [0,0,0,0,0,0,0].map((_, i) => i < 5 ? Math.round((parseFloat(entry.hours)/5)*100)/100 : 0) : [0,0,0,0,0,0,0]);
+                                    const rowTotal = daily.reduce((s, h) => s + (parseFloat(h) || 0), 0);
+                                    return `<tr style="border-top:1px solid var(--p-border)">
+                                        <td style="padding:10px 14px;font-weight:500;border-right:1px solid var(--p-border)"><i class="fas fa-project-diagram" style="color:var(--p-purple);margin-right:6px;font-size:0.75rem"></i>${esc(entry.project || 'General')}</td>
+                                        ${daily.map((h, i) => `<td style="text-align:center;padding:10px 8px;${i >= 5 ? 'opacity:0.5;' : ''}border-right:1px solid var(--p-border);${parseFloat(h) > 0 ? 'color:var(--p-text)' : 'color:var(--p-text-muted)'}">${parseFloat(h) ? parseFloat(h).toFixed(2) : '—'}</td>`).join('')}
+                                        <td style="text-align:center;padding:10px 8px;font-weight:700;color:var(--p-cyan)">${rowTotal.toFixed(2)}</td>
+                                    </tr>`;
+                                }).join('')}
+                            </tbody>
+                            <tfoot>
+                                <tr style="border-top:2px solid var(--p-cyan);background:rgba(0,210,255,0.04)">
+                                    <td style="padding:10px 14px;font-weight:700;border-right:1px solid var(--p-border)"><i class="fas fa-calculator" style="color:var(--p-green);margin-right:6px;font-size:0.75rem"></i>Total Hours</td>
+                                    ${dailyTotals.map((h, i) => `<td style="text-align:center;padding:10px 8px;font-weight:700;${i >= 5 ? 'opacity:0.5;' : ''}border-right:1px solid var(--p-border);color:${h > 0 ? 'var(--p-green)' : 'var(--p-text-muted)'}">${h ? h.toFixed(2) : '—'}</td>`).join('')}
+                                    <td style="text-align:center;padding:10px 8px;font-weight:800;font-size:1rem;color:var(--p-green)">${grandTotal.toFixed(2)}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>`;
+            }).join('')}
         </div>`;
 }
 
 window.showCreateTimesheetModal = () => {
     const today = new Date();
     const monday = new Date(today);
-    monday.setDate(today.getDate() - today.getDay() + 1);
-    const friday = new Date(monday);
-    friday.setDate(monday.getDate() + 4);
+    const dow = today.getDay();
+    monday.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1));
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
     const fmt = d => d.toISOString().split('T')[0];
+    const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const dayDates = days.map((_, i) => {
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + i);
+        return d;
+    });
 
-    openModal('New Timesheet', `
-        <div class="form-grid">
-            <div class="form-group"><label>Week Start</label><input class="form-control" id="ts_start" type="date" value="${fmt(monday)}"></div>
-            <div class="form-group"><label>Week End</label><input class="form-control" id="ts_end" type="date" value="${fmt(friday)}"></div>
+    // Larger modal for weekly grid
+    openModal('New Weekly Timesheet', `
+        <div style="margin-bottom:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <div class="form-group" style="margin:0;flex:1;min-width:140px"><label>Week Start</label><input class="form-control" id="ts_start" type="date" value="${fmt(monday)}" onchange="tsUpdateWeekDates()"></div>
+            <div class="form-group" style="margin:0;flex:1;min-width:140px"><label>Week End (auto)</label><input class="form-control" id="ts_end" type="date" value="${fmt(sunday)}" readonly style="opacity:0.6"></div>
+            <button class="btn btn-sm" onclick="tsAddRow()" style="align-self:end;margin-bottom:2px"><i class="fas fa-plus"></i> Add Row</button>
         </div>
-        <div class="form-grid cols-3" style="margin-top:12px;align-items:end">
-            <div class="form-group" style="margin:0"><label>Project Name</label><input class="form-control" id="ts_proj" placeholder="Project / Task name"></div>
-            <div class="form-group" style="margin:0"><label>Total Hours</label><input class="form-control" id="ts_hrs" type="number" value="40" min="0" max="60" step="0.5"></div>
-            <div class="form-group" style="margin:0"><label>Notes</label><input class="form-control" id="ts_note" placeholder="Optional"></div>
+        <div style="overflow-x:auto;border:1px solid var(--p-border);border-radius:10px">
+            <table id="tsGrid" style="width:100%;border-collapse:collapse;font-size:0.85rem">
+                <thead>
+                    <tr style="background:linear-gradient(135deg,rgba(0,210,255,0.1),rgba(88,86,214,0.1))">
+                        <th style="text-align:left;padding:10px 12px;min-width:150px;border-right:1px solid var(--p-border)">Project / Task</th>
+                        ${days.map((day, i) => `<th id="tsDay${i}" style="text-align:center;padding:10px 6px;min-width:68px;border-right:1px solid var(--p-border)">
+                            <div style="font-weight:600;color:${i >= 5 ? 'var(--p-text-muted)' : 'var(--p-cyan)'}">${day}</div>
+                            <div style="font-size:0.72rem;color:var(--p-text-muted);font-weight:400">${String(dayDates[i].getDate()).padStart(2,'0')}-${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][dayDates[i].getMonth()]}</div>
+                        </th>`).join('')}
+                        <th style="text-align:center;padding:10px 6px;min-width:60px;color:var(--p-cyan);font-weight:700">Total</th>
+                        <th style="width:36px"></th>
+                    </tr>
+                </thead>
+                <tbody id="tsRows">
+                    <tr class="ts-entry-row" style="border-top:1px solid var(--p-border)">
+                        <td style="padding:6px 8px;border-right:1px solid var(--p-border)"><input class="form-control ts-proj" placeholder="Project name" style="font-size:0.82rem;padding:6px 8px"></td>
+                        ${days.map((_, i) => `<td style="padding:4px;border-right:1px solid var(--p-border)"><input class="form-control ts-day" data-day="${i}" type="number" min="0" max="24" step="0.5" value="${i < 5 ? '8' : '0'}" oninput="tsCalcTotals()" style="text-align:center;font-size:0.82rem;padding:6px 4px;${i >= 5 ? 'opacity:0.6' : ''}"></td>`).join('')}
+                        <td class="ts-row-total" style="text-align:center;padding:8px;font-weight:700;color:var(--p-cyan)">40.00</td>
+                        <td style="padding:4px"><button class="btn btn-sm" onclick="tsRemoveRow(this)" style="color:var(--p-red);padding:4px 6px" title="Remove"><i class="fas fa-trash-alt"></i></button></td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr style="border-top:2px solid var(--p-cyan);background:rgba(0,210,255,0.04)">
+                        <td style="padding:10px 12px;font-weight:700;border-right:1px solid var(--p-border)"><i class="fas fa-calculator" style="color:var(--p-green);margin-right:6px"></i>Daily Total</td>
+                        ${days.map((_, i) => `<td id="tsDayTotal${i}" style="text-align:center;padding:10px 6px;font-weight:700;border-right:1px solid var(--p-border);color:var(--p-green)">—</td>`).join('')}
+                        <td id="tsGrandTotal" style="text-align:center;padding:10px 6px;font-weight:800;font-size:1rem;color:var(--p-green)">40.00</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
         </div>
-        <button class="btn btn-primary" onclick="saveTimesheet()" style="margin-top:16px"><i class="fas fa-save"></i> Save Draft</button>
-    `);
+        <div style="margin-top:14px;display:flex;gap:10px;justify-content:flex-end">
+            <button class="btn" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveTimesheet()"><i class="fas fa-save"></i> Save Draft</button>
+        </div>
+    `, { wide: true });
+    tsCalcTotals();
+};
+
+window.tsAddRow = () => {
+    const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const row = document.createElement('tr');
+    row.className = 'ts-entry-row';
+    row.style.borderTop = '1px solid var(--p-border)';
+    row.innerHTML = `
+        <td style="padding:6px 8px;border-right:1px solid var(--p-border)"><input class="form-control ts-proj" placeholder="Project name" style="font-size:0.82rem;padding:6px 8px"></td>
+        ${days.map((_, i) => `<td style="padding:4px;border-right:1px solid var(--p-border)"><input class="form-control ts-day" data-day="${i}" type="number" min="0" max="24" step="0.5" value="0" oninput="tsCalcTotals()" style="text-align:center;font-size:0.82rem;padding:6px 4px;${i >= 5 ? 'opacity:0.6' : ''}"></td>`).join('')}
+        <td class="ts-row-total" style="text-align:center;padding:8px;font-weight:700;color:var(--p-cyan)">0.00</td>
+        <td style="padding:4px"><button class="btn btn-sm" onclick="tsRemoveRow(this)" style="color:var(--p-red);padding:4px 6px" title="Remove"><i class="fas fa-trash-alt"></i></button></td>
+    `;
+    document.getElementById('tsRows').appendChild(row);
+};
+
+window.tsRemoveRow = (btn) => {
+    const rows = document.querySelectorAll('.ts-entry-row');
+    if (rows.length <= 1) { toast('Need at least one row', 'error'); return; }
+    btn.closest('tr').remove();
+    tsCalcTotals();
+};
+
+window.tsCalcTotals = () => {
+    const dayTotals = [0,0,0,0,0,0,0];
+    document.querySelectorAll('.ts-entry-row').forEach(row => {
+        let rowTotal = 0;
+        row.querySelectorAll('.ts-day').forEach(inp => {
+            const v = parseFloat(inp.value) || 0;
+            const day = parseInt(inp.dataset.day);
+            dayTotals[day] += v;
+            rowTotal += v;
+        });
+        row.querySelector('.ts-row-total').textContent = rowTotal.toFixed(2);
+    });
+    let grand = 0;
+    dayTotals.forEach((t, i) => {
+        const el = document.getElementById(`tsDayTotal${i}`);
+        if (el) { el.textContent = t > 0 ? t.toFixed(2) : '—'; el.style.color = t > 0 ? 'var(--p-green)' : 'var(--p-text-muted)'; }
+        grand += t;
+    });
+    const ge = document.getElementById('tsGrandTotal');
+    if (ge) ge.textContent = grand.toFixed(2);
+};
+
+window.tsUpdateWeekDates = () => {
+    const startVal = document.getElementById('ts_start').value;
+    if (!startVal) return;
+    const start = new Date(startVal + 'T00:00:00');
+    // Snap to Monday
+    const dow = start.getDay();
+    if (dow !== 1) start.setDate(start.getDate() - (dow === 0 ? 6 : dow - 1));
+    document.getElementById('ts_start').value = start.toISOString().split('T')[0];
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    document.getElementById('ts_end').value = end.toISOString().split('T')[0];
+    // Update column headers
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    for (let i = 0; i < 7; i++) {
+        const d = new Date(start);
+        d.setDate(start.getDate() + i);
+        const el = document.getElementById(`tsDay${i}`);
+        if (el) el.querySelector('div:last-child').textContent = `${String(d.getDate()).padStart(2,'0')}-${months[d.getMonth()]}`;
+    }
 };
 
 window.saveTimesheet = async () => {
-    const hrs = parseFloat($('#ts_hrs').value) || 0;
-    if (hrs <= 0) { toast('Enter total hours', 'error'); return; }
-    const entries = [{ project: $('#ts_proj').value, hours: hrs, notes: $('#ts_note').value }];
+    const rows = document.querySelectorAll('.ts-entry-row');
+    const entries = [];
+    let totalHours = 0;
+    rows.forEach(row => {
+        const proj = row.querySelector('.ts-proj').value || 'General';
+        const daily = [];
+        row.querySelectorAll('.ts-day').forEach(inp => { daily.push(parseFloat(inp.value) || 0); });
+        const rowTotal = daily.reduce((s, h) => s + h, 0);
+        if (rowTotal > 0) {
+            entries.push({ project: proj, daily, hours: rowTotal });
+            totalHours += rowTotal;
+        }
+    });
+    if (entries.length === 0 || totalHours <= 0) { toast('Enter at least some hours', 'error'); return; }
     try {
         await apiPost('/timesheets', { week_start: $('#ts_start').value, week_end: $('#ts_end').value, entries });
         toast('Timesheet saved as draft'); closeModal(); pageMyTimesheets();
