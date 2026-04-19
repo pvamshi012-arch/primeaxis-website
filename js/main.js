@@ -256,18 +256,32 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Simulate form submission
         const submitBtn = contactForm.querySelector('button[type="submit"]');
         const originalText = submitBtn.innerHTML;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
         submitBtn.disabled = true;
 
-        setTimeout(() => {
-            showNotification('Thank you! Your message has been sent successfully.', 'success');
-            contactForm.reset();
+        fetch('/api/contact', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        })
+        .then(res => res.json().then(body => ({ ok: res.ok, body })))
+        .then(({ ok, body }) => {
+            if (ok) {
+                showNotification('Thank you! Your message has been sent successfully.', 'success');
+                contactForm.reset();
+            } else {
+                showNotification(body.error || 'Failed to send message.', 'error');
+            }
+        })
+        .catch(() => {
+            showNotification('Network error. Please try again.', 'error');
+        })
+        .finally(() => {
             submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
-        }, 1500);
+        });
     });
 
     // ===== NOTIFICATION SYSTEM =====

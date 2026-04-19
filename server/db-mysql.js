@@ -581,6 +581,18 @@ async function initDatabase() {
             )
         `);
 
+        await conn.query(`
+            CREATE TABLE IF NOT EXISTS contact_submissions (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                email VARCHAR(255) NOT NULL,
+                phone VARCHAR(50),
+                service VARCHAR(255),
+                message TEXT NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
         // ===== SEED MANDATORY TRAINING MODULES =====
         const [trainingRows] = await conn.query('SELECT COUNT(*) as c FROM training_modules');
         if (trainingRows[0].c === 0) {
