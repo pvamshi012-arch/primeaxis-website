@@ -1,79 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 90" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 120">
   <defs>
-    <linearGradient id="shieldOuterW" x1="30" y1="0" x2="30" y2="82" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#e8ecf0"/>
-      <stop offset="20%" stop-color="#d0d6de"/>
-      <stop offset="45%" stop-color="#b8c0cb"/>
-      <stop offset="70%" stop-color="#a0aab8"/>
-      <stop offset="100%" stop-color="#8892a2"/>
+    <linearGradient id="dot" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#90e0ef"/>
+      <stop offset="100%" stop-color="#48cae4"/>
     </linearGradient>
-    <linearGradient id="shieldInnerW" x1="30" y1="4" x2="30" y2="76" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#f5f7fa"/>
-      <stop offset="15%" stop-color="#e6eaef"/>
-      <stop offset="50%" stop-color="#cdd4dc"/>
-      <stop offset="85%" stop-color="#b0bac6"/>
-      <stop offset="100%" stop-color="#9aa6b4"/>
-    </linearGradient>
-    <linearGradient id="shieldReflectW" x1="10" y1="10" x2="55" y2="70" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.6"/>
-      <stop offset="30%" stop-color="#ffffff" stop-opacity="0.2"/>
-      <stop offset="60%" stop-color="#ffffff" stop-opacity="0"/>
-      <stop offset="100%" stop-color="#000000" stop-opacity="0.05"/>
-    </linearGradient>
-    <linearGradient id="pFigureW" x1="22" y1="12" x2="38" y2="68" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#5bb8e8"/>
-      <stop offset="30%" stop-color="#3a9ad6"/>
-      <stop offset="60%" stop-color="#2580c0"/>
-      <stop offset="100%" stop-color="#1a6aa8"/>
-    </linearGradient>
-    <linearGradient id="dotFillW" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#4db4e6"/>
-      <stop offset="100%" stop-color="#1a78b8"/>
-    </linearGradient>
-    <linearGradient id="axisTextW" x1="0" y1="18" x2="0" y2="52" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#5cc0f0"/>
-      <stop offset="50%" stop-color="#3a9cd8"/>
-      <stop offset="100%" stop-color="#2a82c0"/>
+    <linearGradient id="axisText" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#48cae4"/>
+      <stop offset="100%" stop-color="#90e0ef"/>
     </linearGradient>
   </defs>
-
-  <!-- ===== SHIELD ===== -->
-  <g transform="translate(2, 3)">
-    <path d="M8,8 C8,4 12,1 17,1 L49,1 C54,1 58,4 58,8 L58,42 C58,56 34,78 33,79 C32,78 8,56 8,42 Z"
-          fill="url(#shieldOuterW)"/>
-    <path d="M10,9 C10,5.5 13,3 17,3 L49,3 C53,3 56,5.5 56,9 L56,41 C56,54 34,74 33,75 C32,74 10,54 10,41 Z"
-          fill="url(#shieldInnerW)"/>
-    <path d="M10,9 C10,5.5 13,3 17,3 L49,3 C53,3 56,5.5 56,9 L56,41 C56,54 34,74 33,75 C32,74 10,54 10,41 Z"
-          fill="url(#shieldReflectW)"/>
-    <path d="M8,8 C8,4 12,1 17,1 L49,1 C54,1 58,4 58,8 L58,42 C58,56 34,78 33,79 C32,78 8,56 8,42 Z"
-          fill="none" stroke="#a0aab6" stroke-width="0.8" opacity="0.4"/>
-
-    <!-- P figure -->
-    <path d="M25,22 L25,64" stroke="url(#pFigureW)" stroke-width="5.5" stroke-linecap="round"/>
-    <path d="M25,22 C25,22 26,18 30,16 C34,14 40,15 42,18 C44,21 44,26 42,29 C40,32 36,33 32,33 L25,33"
-          fill="none" stroke="url(#pFigureW)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M38,20 C40,16 43,12 47,9" fill="none" stroke="url(#pFigureW)" stroke-width="4" stroke-linecap="round"/>
-    <path d="M25,58 C22,62 20,64 18,66" fill="none" stroke="url(#pFigureW)" stroke-width="3.5" stroke-linecap="round" opacity="0.85"/>
-
-    <!-- Dots -->
-    <circle cx="44" cy="29" r="2.8" fill="url(#dotFillW)" opacity="0.65"/>
-    <circle cx="48" cy="19" r="3.2" fill="url(#dotFillW)" opacity="0.8"/>
-    <circle cx="50" cy="8" r="3.6" fill="url(#dotFillW)" opacity="0.95"/>
+  <!-- Icon (transparent background for dark surfaces) -->
+  <g transform="translate(12 12) scale(0.1875)">
+    <rect width="512" height="512" rx="96" fill="white" opacity="0.12"/>
+    <path d="M148 88 L308 88 L390 180 L308 270 L214 270 L214 424 L148 424Z
+             M214 148 L300 148 L350 180 L300 212 L214 212Z"
+          fill="white" fill-rule="evenodd"/>
+    <circle cx="348" cy="58" r="20" fill="url(#dot)"/>
   </g>
-
-  <!-- ===== COMPANY NAME (WHITE) ===== -->
-  <g transform="translate(76, 4)">
-    <text x="0" y="42"
-          font-family="'Poppins', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
-          font-size="36" font-weight="700" fill="#ffffff"
-          letter-spacing="-0.5">Prime</text>
-    <text x="114" y="42"
-          font-family="'Poppins', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
-          font-size="36" font-weight="700" fill="url(#axisTextW)"
-          letter-spacing="-0.5">Axis</text>
-    <text x="2" y="62"
-          font-family="'Inter', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
-          font-size="13.5" font-weight="600" fill="#7dc8f2"
-          letter-spacing="5" opacity="0.85">IT SOLUTIONS</text>
-  </g>
+  <!-- PrimeAxis (white text) -->
+  <text x="122" y="58" font-family="'Poppins', 'Inter', 'Segoe UI', sans-serif" font-weight="700" font-size="40" letter-spacing="-1" fill="#ffffff">Prime</text>
+  <text x="230" y="58" font-family="'Poppins', 'Inter', 'Segoe UI', sans-serif" font-weight="700" font-size="40" letter-spacing="-1" fill="url(#axisText)">Axis</text>
+  <!-- IT SOLUTIONS -->
+  <text x="124" y="80" font-family="'Inter', 'Poppins', 'Segoe UI', sans-serif" font-weight="600" font-size="13" fill="white" letter-spacing="4.5" opacity="0.6">IT SOLUTIONS</text>
 </svg>

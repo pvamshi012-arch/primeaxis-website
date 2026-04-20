@@ -1,25 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1a3a8f"/>
-      <stop offset="50%" stop-color="#2563eb"/>
-      <stop offset="100%" stop-color="#0ea5e9"/>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#001233"/>
+      <stop offset="50%" stop-color="#023e8a"/>
+      <stop offset="100%" stop-color="#0077b6"/>
     </linearGradient>
-    <linearGradient id="lightGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#93c5fd"/>
-      <stop offset="100%" stop-color="#ffffff"/>
+    <linearGradient id="dot" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#90e0ef"/>
+      <stop offset="100%" stop-color="#00b4d8"/>
     </linearGradient>
-    <linearGradient id="dotGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#2563eb"/>
-      <stop offset="100%" stop-color="#06b6d4"/>
-    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="8"/>
+    </filter>
   </defs>
-  <!-- Outer P shape - left vertical + top curve -->
-  <path d="M28 18 L28 102 L42 102 L42 68 L58 68 C78 68 92 56 92 43 C92 30 78 18 58 18 Z" fill="url(#blueGrad)"/>
-  <!-- Inner cutout to form the P bowl -->
-  <path d="M42 30 L58 30 C71 30 79 36 79 43 C79 50 71 56 58 56 L42 56 Z" fill="url(#lightGrad)" opacity="0.9"/>
-  <!-- Stylized swoosh under the P -->
-  <path d="M42 78 C42 78 55 88 75 82 C85 79 92 72 96 65" stroke="url(#blueGrad)" stroke-width="5" stroke-linecap="round" fill="none"/>
-  <!-- Accent dot -->
-  <circle cx="98" cy="22" r="9" fill="url(#dotGrad)"/>
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  <!-- Arrow-P mark: bold P with angular arrow bowl -->
+  <path d="M148 88 L308 88 L390 180 L308 270 L214 270 L214 424 L148 424Z
+           M214 148 L300 148 L350 180 L300 212 L214 212Z"
+        fill="white" fill-rule="evenodd"/>
+  <!-- Accent node with glow -->
+  <circle cx="348" cy="58" r="28" fill="#00b4d8" filter="url(#glow)" opacity="0.45"/>
+  <circle cx="348" cy="58" r="20" fill="url(#dot)"/>
 </svg>
