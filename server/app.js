@@ -236,12 +236,11 @@ app.put('/api/users/:id/hostinger-sync', auth, requireRole('admin'), async (req,
     res.json({ message: synced ? 'Marked as synced with Hostinger' : 'Marked as unsynced' });
 });
 
-// Verify email exists on Hostinger SMTP server
+// Verify email exists on Hostinger by sending a test via authenticated SMTP
 app.post('/api/users/:id/verify-email', auth, requireRole('admin'), async (req, res) => {
     const user = await db.prepare('SELECT id, email FROM users WHERE id = ?').get(req.params.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    const net = require('net');
     const email = user.email;
     const domain = email.split('@')[1];
     if (domain !== 'primeaxisit.com') {
@@ -249,39 +248,44 @@ app.post('/api/users/:id/verify-email', auth, requireRole('admin'), async (req, 
     }
 
     try {
-        const result = await new Promise((resolve, reject) => {
-            const socket = net.createConnection(25, 'smtp.hostinger.com');
-            let step = 0, response = '';
-            const timeout = setTimeout(() => { socket.destroy(); reject(new Error('SMTP timeout')); }, 15000);
-
-            socket.setEncoding('utf8');
-            socket.on('data', (data) => {
-                response += data;
-                if (step === 0 && data.includes('220')) {
-                    step = 1; socket.write('EHLO primeaxisit.com\r\n');
-                } else if (step === 1 && data.includes('250')) {
-                    step = 2; socket.write('MAIL FROM:<verify@primeaxisit.com>\r\n');
-                } else if (step === 2 && data.includes('250')) {
-                    step = 3; socket.write(`RCPT TO:<${email}>\r\n`);
-                } else if (step === 3) {
-                    const code = parseInt(data.substring(0, 3));
-                    clearTimeout(timeout);
-                    socket.write('QUIT\r\n');
-                    socket.end();
-                    resolve({ verified: code === 250, code });
-                }
-            });
-            socket.on('error', (err) => { clearTimeout(timeout); reject(err); });
+        const nodemailer = require('nodemailer');
+        const transporter = nodemailer.createTransport({
+            host: process.env.SMTP_HOST || 'smtp.hostinger.com',
+            port: parseInt(process.env.SMTP_PORT) || 465,
+            secure: true,
+            auth: {
+                user: process.env.SMTP_USER || 'info@primeaxisit.com',
+                pass: process.env.SMTP_PASS || '',
+            },
+            connectionTimeout: 10000,
+            greetingTimeout: 10000,
         });
 
-        if (result.verified) {
-            await db.prepare('UPDATE users SET hostinger_synced = 1 WHERE id = ?').run(user.id);
-        }
-        res.json({ verified: result.verified, message: result.verified ? 'Email verified on Hostinger - marked as synced' : 'Email NOT found on Hostinger SMTP (code ' + result.code + ')' });
+        await transporter.sendMail({
+            from: `"PrimeAxis Portal" <${process.env.SMTP_USER || 'info@primeaxisit.com'}>`,
+            to: email,
+            subject: 'Email Verified - PrimeAxis Portal',
+            html: `<div style="font-family:sans-serif;padding:20px;background:#0f172a;color:#e2e8f0;border-radius:12px">
+                <h2 style="color:#48cae4">Email Verified</h2>
+                <p>Your email <strong>${email}</strong> has been verified and synced with the PrimeAxis IT Portal.</p>
+                <p style="color:#94a3b8;font-size:13px">This is an automated verification email. No action needed.</p>
+            </div>`,
+        });
+
+        await db.prepare('UPDATE users SET hostinger_synced = 1 WHERE id = ?').run(user.id);
+        res.json({ verified: true, message: 'Email verified - verification email sent and marked as synced' });
     } catch (err) {
-        res.json({ verified: false, message: 'Could not verify via SMTP: ' + err.message + '. You can manually mark as synced.' });
+        const msg = err.message || '';
+        if (msg.includes('Mailbox not found') || msg.includes('recipient') || msg.includes('550') || msg.includes('553')) {
+            res.json({ verified: false, message: 'Mailbox does NOT exist on Hostinger. Create it first, then verify again.' });
+        } else if (!(process.env.SMTP_PASS || '').length) {
+            res.json({ verified: false, message: 'SMTP not configured on server. Use manual sync instead.' });
+        } else {
+            res.json({ verified: false, message: 'Verification failed: ' + msg.substring(0, 100) + '. You can manually mark as synced.' });
+        }
     }
 });
+
 
 // ============================================================
 //  EMPLOYEE MANAGEMENT (HR + Admin)
