@@ -71,6 +71,7 @@ async function initDatabase() {
                 name VARCHAR(255) NOT NULL,
                 is_active TINYINT DEFAULT 1,
                 must_change_password TINYINT DEFAULT 1,
+                temp_password_expires DATETIME,
                 hostinger_synced TINYINT DEFAULT 0,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -144,6 +145,8 @@ async function initDatabase() {
                 relocation_expense DOUBLE DEFAULT 0,
                 employment_type VARCHAR(20) DEFAULT 'permanent',
                 contract_end_date VARCHAR(20),
+                candidate_signature LONGTEXT,
+                accepted_at DATETIME,
                 status ENUM('draft','pending_approval','approved','released','accepted','rejected') DEFAULT 'draft',
                 created_by INT,
                 approved_by INT,
@@ -656,6 +659,11 @@ async function initDatabase() {
             }
             console.log('✅ Job postings seeded');
         }
+
+        // Migration: Add new columns if missing
+        try { await conn.query("ALTER TABLE offer_letters ADD COLUMN candidate_signature LONGTEXT"); } catch(e) {}
+        try { await conn.query("ALTER TABLE offer_letters ADD COLUMN accepted_at DATETIME"); } catch(e) {}
+        try { await conn.query("ALTER TABLE users ADD COLUMN temp_password_expires DATETIME"); } catch(e) {}
 
         // ===== SEED DEFAULT ADMIN =====
         const [adminRows] = await conn.query("SELECT id FROM users WHERE role = 'admin' LIMIT 1");

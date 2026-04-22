@@ -281,6 +281,11 @@ const navConfig = {
             { id: 'my-tickets', icon: 'fa-ticket', label: 'Raise Ticket' },
         ]}
     ],
+    candidate: [
+        { section: 'Welcome', items: [
+            { id: 'my-offer', icon: 'fa-file-contract', label: 'My Offer Letter' },
+        ]}
+    ],
     employee: [
         { section: 'Main', items: [
             { id: 'dashboard', icon: 'fa-gauge-high', label: 'Dashboard' },
@@ -1584,8 +1589,117 @@ async function pageMyOffer() {
     pageTitle.textContent = 'My Offer Letter';
     const o = await apiGet('/my/offer');
     if (!o) { content.innerHTML = '<div class="empty-state"><i class="fas fa-file-contract"></i><h3>No Offer Letter</h3><p>Your offer letter has not been released yet.</p></div>'; return; }
-    content.innerHTML = renderOfferLetter(o) + `<br><button class="btn btn-primary" onclick="window.print()"><i class="fas fa-print"></i> Print / Download PDF</button>`;
+
+    let actions = '';
+    if (o.status === 'released') {
+        actions = `
+            <div class="card" style="margin-top:24px;padding:24px;background:var(--p-card-bg);border:1px solid var(--p-border);border-radius:12px">
+                <h3 style="color:var(--p-text);margin:0 0 16px"><i class="fas fa-file-signature"></i> Accept Offer Letter</h3>
+                <p style="color:var(--p-text-muted);font-size:14px;margin-bottom:16px">Please draw your signature below and click "Accept & Sign" to formally accept this offer.</p>
+                <div style="background:#fff;border:2px dashed var(--p-border);border-radius:8px;margin-bottom:16px;position:relative">
+                    <canvas id="signatureCanvas" width="500" height="180" style="width:100%;cursor:crosshair;touch-action:none"></canvas>
+                    <button onclick="clearSignature()" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.1);border:none;border-radius:4px;padding:4px 10px;font-size:12px;cursor:pointer;color:#666">Clear</button>
+                </div>
+                <div style="display:flex;gap:12px;flex-wrap:wrap">
+                    <button class="btn btn-primary" onclick="acceptOffer(${o.id})" id="acceptBtn"><i class="fas fa-check-circle"></i> Accept & Sign Offer</button>
+                    <button class="btn btn-secondary" onclick="window.print()"><i class="fas fa-print"></i> Print / Download PDF</button>
+                </div>
+            </div>`;
+    } else if (o.status === 'accepted') {
+        actions = `
+            <div class="card" style="margin-top:24px;padding:24px;background:var(--p-card-bg);border:1px solid #10b981;border-radius:12px">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+                    <i class="fas fa-check-circle" style="color:#10b981;font-size:24px"></i>
+                    <div>
+                        <h3 style="color:#10b981;margin:0">Offer Accepted</h3>
+                        <p style="color:var(--p-text-muted);font-size:13px;margin:2px 0 0">You accepted this offer on ${o.accepted_at ? new Date(o.accepted_at).toLocaleDateString('en-IN', {day:'numeric',month:'long',year:'numeric'}) : 'N/A'}</p>
+                    </div>
+                </div>
+                ${o.candidate_signature ? `<div style="background:#fff;border:1px solid var(--p-border);border-radius:8px;padding:12px;margin-bottom:16px"><p style="color:var(--p-text-muted);font-size:12px;margin:0 0 8px">Your Signature:</p><img src="${o.candidate_signature}" style="max-height:80px" alt="Signature"></div>` : ''}
+                <button class="btn btn-primary" onclick="window.print()"><i class="fas fa-print"></i> Print / Download PDF</button>
+            </div>`;
+    } else {
+        actions = `<br><button class="btn btn-primary" onclick="window.print()"><i class="fas fa-print"></i> Print / Download PDF</button>`;
+    }
+
+    content.innerHTML = renderOfferLetter(o) + actions;
+
+    // Initialize signature canvas if present
+    if (o.status === 'released') {
+        setTimeout(() => initSignatureCanvas(), 100);
+    }
 }
+
+function initSignatureCanvas() {
+    const canvas = document.getElementById('signatureCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+    let lastX = 0, lastY = 0;
+
+    // Set canvas resolution properly
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = 180;
+
+    ctx.strokeStyle = '#1a1a2e';
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    function getPos(e) {
+        const r = canvas.getBoundingClientRect();
+        const touch = e.touches ? e.touches[0] : e;
+        return { x: touch.clientX - r.left, y: touch.clientY - r.top };
+    }
+
+    canvas.addEventListener('mousedown', e => { drawing = true; const p = getPos(e); lastX = p.x; lastY = p.y; });
+    canvas.addEventListener('mousemove', e => { if (!drawing) return; const p = getPos(e); ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(p.x, p.y); ctx.stroke(); lastX = p.x; lastY = p.y; });
+    canvas.addEventListener('mouseup', () => drawing = false);
+    canvas.addEventListener('mouseout', () => drawing = false);
+
+    canvas.addEventListener('touchstart', e => { e.preventDefault(); drawing = true; const p = getPos(e); lastX = p.x; lastY = p.y; }, { passive: false });
+    canvas.addEventListener('touchmove', e => { e.preventDefault(); if (!drawing) return; const p = getPos(e); ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(p.x, p.y); ctx.stroke(); lastX = p.x; lastY = p.y; }, { passive: false });
+    canvas.addEventListener('touchend', () => drawing = false);
+
+    window._signatureCanvas = canvas;
+}
+
+window.clearSignature = function() {
+    const canvas = document.getElementById('signatureCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+};
+
+window.acceptOffer = async function(offerId) {
+    const canvas = document.getElementById('signatureCanvas');
+    if (!canvas) return;
+
+    // Check if canvas has any drawing
+    const ctx = canvas.getContext('2d');
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const hasContent = imageData.data.some((v, i) => i % 4 === 3 && v > 0);
+    if (!hasContent) {
+        toast('Please draw your signature first', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('acceptBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+    try {
+        const signature = canvas.toDataURL('image/png');
+        await apiPut('/my/offer/accept', { signature });
+        toast('Offer accepted successfully! Welcome to PrimeAxis IT Solutions!', 'success');
+        pageMyOffer();
+    } catch (e) {
+        toast(e.message, 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-check-circle"></i> Accept & Sign Offer';
+    }
+};
 
 async function pageMyTimesheets() {
     pageTitle.textContent = 'My Timesheets';

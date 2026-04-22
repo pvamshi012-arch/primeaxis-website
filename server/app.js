@@ -151,6 +151,14 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
         return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    // Check if temp password has expired
+    if (user.must_change_password && user.temp_password_expires) {
+        const expires = new Date(user.temp_password_expires);
+        if (new Date() > expires) {
+            return res.status(401).json({ error: 'Temporary password has expired. Please contact HR for a new one.' });
+        }
+    }
+
     // Get employee info if exists
     const employee = await db.prepare('SELECT id, employee_code, name, designation, department FROM employees WHERE user_id = ?').get(user.id);
 
@@ -171,6 +179,43 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
             employee: employee || null
         }
     });
+});
+
+// Set new password (forced change after temp password login)
+app.post('/api/auth/set-password', async (req, res) => {
+    const { token: authToken, newPassword } = req.body;
+    if (!authToken || !newPassword) return res.status(400).json({ error: 'Token and new password required' });
+    if (newPassword.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
+
+    try {
+        const decoded = jwt.verify(authToken, JWT_SECRET);
+        const user = await db.prepare('SELECT * FROM users WHERE id = ?').get(decoded.id);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        const hash = bcrypt.hashSync(newPassword, 10);
+        await db.prepare('UPDATE users SET password = ?, must_change_password = 0, temp_password_expires = NULL, updated_at = datetime("now") WHERE id = ?')
+            .run(hash, user.id);
+
+        // Return fresh token
+        const employee = await db.prepare('SELECT id, employee_code, name, designation, department FROM employees WHERE user_id = ?').get(user.id);
+        const freshToken = jwt.sign(
+            { id: user.id, email: user.email, role: user.role, name: user.name, employeeId: employee?.id },
+            JWT_SECRET,
+            { expiresIn: '12h' }
+        );
+
+        res.json({
+            message: 'Password updated successfully',
+            token: freshToken,
+            user: {
+                id: user.id, name: user.name, email: user.email, role: user.role,
+                mustChangePassword: false,
+                employee: employee || null
+            }
+        });
+    } catch {
+        return res.status(401).json({ error: 'Invalid or expired token' });
+    }
 });
 
 app.post('/api/auth/change-password', auth, async (req, res) => {
@@ -402,10 +447,51 @@ app.get('/api/my/offer', auth, async (req, res) => {
     const emp = await db.prepare('SELECT id FROM employees WHERE user_id = ?').get(req.user.id);
     if (!emp) return res.json(null);
 
-    const offer = await db.prepare('SELECT * FROM offer_letters WHERE employee_id = ? AND status = ? ORDER BY created_at DESC LIMIT 1')
-        .get(emp.id, 'released');
+    const offer = await db.prepare("SELECT * FROM offer_letters WHERE employee_id = ? AND status IN ('released','accepted') ORDER BY created_at DESC LIMIT 1")
+        .get(emp.id);
     if (!offer) return res.json(null);
     res.json(offer);
+});
+
+// Accept offer with digital signature
+app.put('/api/my/offer/accept', auth, async (req, res) => {
+    const { signature } = req.body;
+    if (!signature) return res.status(400).json({ error: 'Digital signature is required' });
+
+    const emp = await db.prepare('SELECT id FROM employees WHERE user_id = ?').get(req.user.id);
+    if (!emp) return res.status(400).json({ error: 'No employee profile linked' });
+
+    const offer = await db.prepare("SELECT * FROM offer_letters WHERE employee_id = ? AND status = 'released' ORDER BY created_at DESC LIMIT 1").get(emp.id);
+    if (!offer) return res.status(400).json({ error: 'No released offer letter found' });
+
+    await db.prepare("UPDATE offer_letters SET status = 'accepted', candidate_signature = ?, accepted_at = datetime('now') WHERE id = ?")
+        .run(signature, offer.id);
+
+    // Notify HR about acceptance
+    const hrUsers = await db.prepare("SELECT email FROM users WHERE role IN ('hr','admin') AND is_active = 1").all();
+    for (const h of hrUsers) {
+        try {
+            await sendEmail(h.email, `Offer Accepted - ${offer.employee_name} (${offer.reference_no})`,
+                `<div style="font-family:Segoe UI,Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
+                    <div style="background:linear-gradient(135deg,#059669,#10b981);padding:20px 28px">
+                        <h2 style="color:#fff;margin:0;font-size:18px">&#9989; Offer Letter Accepted</h2>
+                    </div>
+                    <div style="padding:24px 28px">
+                        <p style="color:#475569;font-size:15px"><strong>${offer.employee_name}</strong> has accepted the offer letter <strong>${offer.reference_no}</strong> with a digital signature.</p>
+                        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin:16px 0">
+                            <p style="margin:4px 0;font-size:14px"><strong>Designation:</strong> ${offer.designation}</p>
+                            <p style="margin:4px 0;font-size:14px"><strong>Department:</strong> ${offer.department}</p>
+                            <p style="margin:4px 0;font-size:14px"><strong>Date of Joining:</strong> ${offer.date_of_joining}</p>
+                        </div>
+                        <div style="text-align:center;margin:20px 0">
+                            <a href="https://testing.primeaxisit.com/portal/#offers" style="display:inline-block;background:#059669;color:#fff;padding:10px 28px;border-radius:6px;text-decoration:none;font-weight:600">View in Portal</a>
+                        </div>
+                    </div>
+                </div>`);
+        } catch(e) { console.error('Offer accept email failed:', e.message); }
+    }
+
+    res.json({ message: 'Offer accepted successfully' });
 });
 
 app.post('/api/offers', auth, requireRole('admin', 'hr'), upload.fields([
@@ -562,11 +648,41 @@ app.put('/api/offers/:id/release', auth, requireRole('admin', 'hr'), async (req,
         await db.prepare('UPDATE offer_letters SET employee_id = ? WHERE id = ?').run(empId, req.params.id);
     }
 
+    // Create user account for candidate with temp password
+    let tempPassword = '';
+    if (offer.employee_email) {
+        const candidateEmail = offer.employee_email.toLowerCase().trim();
+        let existingUser = await db.prepare('SELECT id FROM users WHERE email = ?').get(candidateEmail);
+        if (!existingUser) {
+            // Generate 8-char temp password
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+            for (let i = 0; i < 8; i++) tempPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+            const hash = bcrypt.hashSync(tempPassword, 10);
+            const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
+            const result = await db.prepare('INSERT INTO users (email, password, role, name, must_change_password, temp_password_expires, is_active) VALUES (?, ?, ?, ?, 1, ?, 1)')
+                .run(candidateEmail, hash, 'employee', offer.employee_name, expires);
+            existingUser = { id: result.lastInsertRowid };
+            // Link employee to user
+            const emp = await db.prepare('SELECT id FROM employees WHERE email = ?').get(candidateEmail);
+            if (emp) {
+                await db.prepare('UPDATE employees SET user_id = ? WHERE id = ?').run(existingUser.id, emp.id);
+            }
+            console.log(`Created user account for ${candidateEmail} with temp password`);
+        } else {
+            // User exists, just ensure employee is linked
+            const emp = await db.prepare('SELECT id FROM employees WHERE email = ?').get(candidateEmail);
+            if (emp && !emp.user_id) {
+                await db.prepare('UPDATE employees SET user_id = ? WHERE id = ?').run(existingUser.id, emp.id);
+            }
+        }
+    }
+
     // Send offer letter email to candidate from HR
     if (offer.employee_email) {
+        // tempPassword was set in the user creation block above
         try {
-            const salary = JSON.parse(offer.salary_breakup);
-            const m = salary.monthly;
+            const salary = JSON.parse(offer.salary_breakup || '{}');
+            const m = salary.monthly || {};
             const fmt = n => Number(n).toLocaleString('en-IN');
             const joinDate = new Date(offer.date_of_joining).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
             const transporter = nodemailer.createTransport({
@@ -598,9 +714,15 @@ app.put('/api/offers/:id/release', auth, requireRole('admin', 'hr'), async (req,
                                 <tr><td style="padding:6px 0;color:#64748b">Monthly Net (Take-Home)</td><td style="padding:6px 0;font-weight:700;color:#0077b6;text-align:right">&#8377;${fmt(m.net_salary)}</td></tr>
                             </table>
                         </div>
-                        <p style="color:#475569;font-size:14px;line-height:1.7">Please log in to the <a href="https://testing.primeaxisit.com/portal/" style="color:#0077b6;font-weight:600">Employee Portal</a> to view and download your complete offer letter with salary breakup.</p>
+                        <p style="color:#475569;font-size:14px;line-height:1.7">Please log in to the Employee Portal to view your complete offer letter, sign digitally, and accept it.</p>
+                        <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:16px;margin:16px 0">
+                            <p style="margin:0 0 8px;font-size:14px;font-weight:600;color:#1e40af"><i>&#128274;</i> Your Login Credentials</p>
+                            <p style="margin:4px 0;font-size:14px;color:#334155"><strong>Email:</strong> ${offer.employee_email}</p>
+                            <p style="margin:4px 0;font-size:14px;color:#334155"><strong>Temporary Password:</strong> <code style="background:#dbeafe;padding:2px 8px;border-radius:4px;font-size:13px">${tempPassword ? tempPassword : '(use your existing password)'}</code></p>
+                            <p style="margin:8px 0 0;font-size:12px;color:#64748b">&#9888; This temporary password expires in 24 hours. You will be asked to set a new password on first login.</p>
+                        </div>
                         <div style="margin:24px 0;text-align:center">
-                            <a href="https://testing.primeaxisit.com/portal/" style="display:inline-block;background:linear-gradient(135deg,#0077b6,#00b4d8);color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-weight:600;font-size:15px">View Offer Letter</a>
+                            <a href="https://testing.primeaxisit.com/portal/login.html" style="display:inline-block;background:linear-gradient(135deg,#0077b6,#00b4d8);color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-weight:600;font-size:15px">Login &amp; Accept Offer</a>
                         </div>
                         <p style="color:#94a3b8;font-size:13px;line-height:1.6">If you have any questions, please reach out to HR at <a href="mailto:hr@primeaxisit.com" style="color:#0077b6">hr@primeaxisit.com</a> or call +91 8333079944.</p>
                     </div>

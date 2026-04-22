@@ -225,6 +225,38 @@
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.error || 'Login failed');
 
+                if (data.user.mustChangePassword) {
+                    // Show set new password form
+                    document.getElementById('loginForm').style.display = 'none';
+                    document.querySelector('.login-header h1').textContent = 'Set New Password';
+                    document.querySelector('.login-header p').textContent = 'Your temporary password needs to be changed';
+                    const pwDiv = document.createElement('div');
+                    pwDiv.id = 'setPasswordForm';
+                    pwDiv.innerHTML = `
+                        <div class="form-group">
+                            <label for="newPassword">New Password</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-lock"></i>
+                                <input type="password" id="newPassword" placeholder="Enter new password (min 6 chars)" required minlength="6">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="confirmPassword">Confirm Password</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-lock"></i>
+                                <input type="password" id="confirmPassword" placeholder="Confirm new password" required>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-login" id="setPwBtn" onclick="setNewPassword()">
+                            <span>Set Password & Continue</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    `;
+                    document.querySelector('.login-card').insertBefore(pwDiv, document.querySelector('.back-link'));
+                    window._tempToken = data.token;
+                    window._tempUser = data.user;
+                    return;
+                }
                 localStorage.setItem('primeaxis_token', data.token);
                 localStorage.setItem('primeaxis_user', JSON.stringify(data.user));
                 window.location.href = '/portal/';
@@ -237,6 +269,40 @@
                 arrowIcon.style.display = '';
             }
         });
+        async function setNewPassword() {
+            const np = document.getElementById('newPassword').value;
+            const cp = document.getElementById('confirmPassword').value;
+            const errorDiv = document.getElementById('error');
+            const errorText = document.getElementById('errorText');
+
+            if (np.length < 6) { errorText.textContent = 'Password must be at least 6 characters'; errorDiv.classList.add('show'); return; }
+            if (np !== cp) { errorText.textContent = 'Passwords do not match'; errorDiv.classList.add('show'); return; }
+            errorDiv.classList.remove('show');
+
+            const btn = document.getElementById('setPwBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span>Setting password...</span><div class="spinner" style="display:block"></div>';
+
+            try {
+                const res = await fetch('/api/auth/set-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: window._tempToken, newPassword: np })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Failed to set password');
+
+                localStorage.setItem('primeaxis_token', data.token);
+                localStorage.setItem('primeaxis_user', JSON.stringify(data.user));
+                window.location.href = '/portal/';
+            } catch (err) {
+                errorText.textContent = err.message;
+                errorDiv.classList.add('show');
+                btn.disabled = false;
+                btn.innerHTML = '<span>Set Password & Continue</span><i class="fas fa-arrow-right"></i>';
+            }
+        }
+        window.setNewPassword = setNewPassword;
     </script>
 </body>
 </html>
