@@ -476,6 +476,78 @@ app.put('/api/offers/:id/release', auth, requireRole('admin', 'hr'), async (req,
     if (offer.employee_id) {
         await db.prepare('UPDATE employees SET status = ?, annual_ctc = ?, designation = ?, department = ?, date_of_joining = ? WHERE id = ?')
             .run('active', offer.annual_ctc, offer.designation, offer.department, offer.date_of_joining, offer.employee_id);
+    } else if (offer.employee_email) {
+        // Auto-create employee record and link to user if email matches
+        const user = await db.prepare('SELECT id FROM users WHERE email = ?').get(offer.employee_email.toLowerCase().trim());
+        let empId;
+        const existingEmp = await db.prepare('SELECT id FROM employees WHERE email = ?').get(offer.employee_email.toLowerCase().trim());
+        if (existingEmp) {
+            empId = existingEmp.id;
+            await db.prepare('UPDATE employees SET status = ?, annual_ctc = ?, designation = ?, department = ?, date_of_joining = ?, user_id = ? WHERE id = ?')
+                .run('active', offer.annual_ctc, offer.designation, offer.department, offer.date_of_joining, user ? user.id : null, empId);
+        } else {
+            const empCode = await generateEmployeeCode();
+            const result = await db.prepare(
+                'INSERT INTO employees (employee_code, name, email, phone, address, city, state, pincode, department, designation, date_of_joining, annual_ctc, status, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            ).run(empCode, offer.employee_name, offer.employee_email.toLowerCase().trim(), offer.employee_phone || '', offer.employee_address || '', offer.employee_city || '', offer.employee_state || 'Telangana', offer.employee_pincode || '', offer.department, offer.designation, offer.date_of_joining, offer.annual_ctc, 'active', user ? user.id : null);
+            empId = result.lastInsertRowid;
+            const year = new Date().getFullYear();
+            await db.prepare('INSERT OR IGNORE INTO leave_balances (employee_id, year) VALUES (?, ?)').run(empId, year);
+        }
+        await db.prepare('UPDATE offer_letters SET employee_id = ? WHERE id = ?').run(empId, req.params.id);
+    }
+
+    // Send offer letter email to candidate from HR
+    if (offer.employee_email) {
+        try {
+            const salary = JSON.parse(offer.salary_breakup);
+            const m = salary.monthly;
+            const fmt = n => Number(n).toLocaleString('en-IN');
+            const joinDate = new Date(offer.date_of_joining).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+            const transporter = nodemailer.createTransport({
+                host: process.env.SMTP_HOST || 'smtp.hostinger.com',
+                port: parseInt(process.env.SMTP_PORT) || 465,
+                secure: true,
+                auth: { user: process.env.SMTP_USER || 'hr@primeaxisit.com', pass: process.env.SMTP_PASS || 'Welcome@2026!' },
+            });
+            await transporter.sendMail({
+                from: '"PrimeAxis IT Solutions - HR" <hr@primeaxisit.com>',
+                to: offer.employee_email,
+                subject: `Offer Letter - ${offer.reference_no} | PrimeAxis IT Solutions`,
+                html: `<div style="font-family:Segoe UI,Arial,sans-serif;max-width:650px;margin:0 auto;background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
+                    <div style="background:linear-gradient(135deg,#001233,#0077b6);padding:28px 32px;text-align:center">
+                        <h1 style="color:#fff;margin:0;font-size:22px">PrimeAxis IT Solutions</h1>
+                        <p style="color:#90e0ef;margin:4px 0 0;font-size:13px">Innovative Technology Services</p>
+                    </div>
+                    <div style="padding:28px 32px">
+                        <h2 style="color:#001233;margin:0 0 8px;font-size:20px">Congratulations, ${offer.employee_name}!</h2>
+                        <p style="color:#475569;font-size:15px;line-height:1.7">We are pleased to inform you that your offer letter has been released. Welcome to the PrimeAxis IT Solutions family!</p>
+                        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:20px;margin:20px 0">
+                            <table style="width:100%;border-collapse:collapse;font-size:14px">
+                                <tr><td style="padding:6px 0;color:#64748b">Reference</td><td style="padding:6px 0;font-weight:600;color:#0f172a;text-align:right">${offer.reference_no}</td></tr>
+                                <tr><td style="padding:6px 0;color:#64748b">Designation</td><td style="padding:6px 0;font-weight:600;color:#0f172a;text-align:right">${offer.designation}</td></tr>
+                                <tr><td style="padding:6px 0;color:#64748b">Department</td><td style="padding:6px 0;font-weight:600;color:#0f172a;text-align:right">${offer.department}</td></tr>
+                                <tr><td style="padding:6px 0;color:#64748b">Date of Joining</td><td style="padding:6px 0;font-weight:600;color:#0f172a;text-align:right">${joinDate}</td></tr>
+                                <tr><td style="padding:6px 0;color:#64748b">Annual CTC</td><td style="padding:6px 0;font-weight:700;color:#059669;text-align:right">&#8377;${fmt(offer.annual_ctc)}</td></tr>
+                                <tr style="border-top:1px solid #e2e8f0"><td style="padding:10px 0 6px;color:#64748b">Monthly Gross</td><td style="padding:10px 0 6px;font-weight:600;color:#0f172a;text-align:right">&#8377;${fmt(m.gross)}</td></tr>
+                                <tr><td style="padding:6px 0;color:#64748b">Monthly Net (Take-Home)</td><td style="padding:6px 0;font-weight:700;color:#0077b6;text-align:right">&#8377;${fmt(m.net_salary)}</td></tr>
+                            </table>
+                        </div>
+                        <p style="color:#475569;font-size:14px;line-height:1.7">Please log in to the <a href="https://testing.primeaxisit.com/portal/" style="color:#0077b6;font-weight:600">Employee Portal</a> to view and download your complete offer letter with salary breakup.</p>
+                        <div style="margin:24px 0;text-align:center">
+                            <a href="https://testing.primeaxisit.com/portal/" style="display:inline-block;background:linear-gradient(135deg,#0077b6,#00b4d8);color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-weight:600;font-size:15px">View Offer Letter</a>
+                        </div>
+                        <p style="color:#94a3b8;font-size:13px;line-height:1.6">If you have any questions, please reach out to HR at <a href="mailto:hr@primeaxisit.com" style="color:#0077b6">hr@primeaxisit.com</a> or call +91 8333079944.</p>
+                    </div>
+                    <div style="background:#f1f5f9;padding:16px 32px;text-align:center;border-top:1px solid #e2e8f0">
+                        <p style="color:#94a3b8;font-size:12px;margin:0">PrimeAxis IT Solutions | Plot No: 207, Road No: 8, KPHB, Hyderabad - 500072</p>
+                        <p style="color:#94a3b8;font-size:11px;margin:4px 0 0">This is an automated email. Please do not reply directly.</p>
+                    </div></div>`,
+            });
+            console.log('Offer email sent to', offer.employee_email);
+        } catch (emailErr) {
+            console.error('Failed to send offer email:', emailErr.message);
+        }
     }
 
     res.json({ message: 'Offer letter released' });
