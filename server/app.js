@@ -7,6 +7,7 @@ const fs = require('fs');
 const multer = require('multer');
 const crypto = require('crypto');
 const helmet = require('helmet');
+const nodemailer = require('nodemailer');
 const rateLimit = require('express-rate-limit');
 const { db, initDatabase, generateEmployeeCode, generateOfferRef, generateRelievingRef, generateTicketNo, generateBGVToken, generateTempPassword } = require('./db-mysql');
 const { breakdownCTC, calculatePayslip, amountInWords } = require('./salary');
@@ -248,7 +249,6 @@ app.post('/api/users/:id/verify-email', auth, requireRole('admin'), async (req, 
     }
 
     try {
-        const nodemailer = require('nodemailer');
         const transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST || 'smtp.hostinger.com',
             port: parseInt(process.env.SMTP_PORT) || 465,
