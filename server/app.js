@@ -412,20 +412,10 @@ app.post('/api/offers', auth, requireRole('admin', 'hr'), upload.fields([
         return res.status(400).json({ error: 'Contract end date is required for contract employees' });
     }
 
-    // Validate mandatory documents
-    if (!req.files || !req.files.doc_aadhar || !req.files.doc_aadhar[0]) {
-        return res.status(400).json({ error: 'Candidate Aadhar card document is required' });
-    }
-    if (!req.files.doc_pan || !req.files.doc_pan[0]) {
-        return res.status(400).json({ error: 'Candidate PAN card document is required' });
-    }
-    if (!req.files.doc_photo || !req.files.doc_photo[0]) {
-        return res.status(400).json({ error: 'Candidate photo is required' });
-    }
-
-    const docAadhar = 'offer-docs/' + req.files.doc_aadhar[0].filename;
-    const docPan = 'offer-docs/' + req.files.doc_pan[0].filename;
-    const docPhoto = 'offer-docs/' + req.files.doc_photo[0].filename;
+    // Documents are optional
+    const docAadhar = req.files && req.files.doc_aadhar && req.files.doc_aadhar[0] ? 'offer-docs/' + req.files.doc_aadhar[0].filename : null;
+    const docPan = req.files && req.files.doc_pan && req.files.doc_pan[0] ? 'offer-docs/' + req.files.doc_pan[0].filename : null;
+    const docPhoto = req.files && req.files.doc_photo && req.files.doc_photo[0] ? 'offer-docs/' + req.files.doc_photo[0].filename : null;
 
     const refNo = await generateOfferRef();
     const salaryBreakup = JSON.stringify(breakdownCTC(parseFloat(annual_ctc)));
