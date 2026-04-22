@@ -500,7 +500,7 @@ async function pageUsers() {
             <div class="table-header">
                 <h3><i class="fas fa-user-shield"></i> All Users (${users.length})</h3>
                 <div style="display:flex;gap:8px">
-                    <button class="btn btn-secondary" onclick="verifyAllEmails()" title="Verify all unsynced emails"><i class="fas fa-sync"></i> Verify All</button>
+                    <button class="btn btn-secondary" onclick="markAllSynced()" title="Mark all unsynced users as synced"><i class="fas fa-check-double"></i> Mark All Synced</button>
                     <button class="btn btn-primary" onclick="showCreateUserModal()"><i class="fas fa-plus"></i> Add User</button>
                 </div>
             </div>
@@ -545,16 +545,16 @@ window.toggleHostingerSync = async (id, synced) => {
     } catch (e) { toast(e.message, 'error'); }
 };
 
-window.verifyAllEmails = async () => {
+window.markAllSynced = async () => {
     const users = await apiGet('/users');
     const unsynced = users.filter(u => !u.hostinger_synced && u.email.endsWith('@primeaxisit.com'));
     if (!unsynced.length) { toast('All users are already synced!'); return; }
-    toast(`Verifying ${unsynced.length} email(s)...`, 'info');
-    for (const u of unsynced) {
-        try { await apiPost(`/users/${u.id}/verify-email`); } catch {}
-    }
-    toast('Verification complete');
-    pageUsers();
+    if (!confirm(`Mark ${unsynced.length} user(s) as synced with Hostinger?`)) return;
+    try {
+        await apiPost('/users/mark-all-synced');
+        toast(`${unsynced.length} user(s) marked as synced`);
+        pageUsers();
+    } catch (e) { toast(e.message, 'error'); }
 };
 
 window.showCreateUserModal = () => {

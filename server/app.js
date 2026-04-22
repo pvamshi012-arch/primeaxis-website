@@ -287,6 +287,12 @@ app.post('/api/users/:id/verify-email', auth, requireRole('admin'), async (req, 
 
 
 
+// Mark all @primeaxisit.com users as synced with Hostinger
+app.post('/api/users/mark-all-synced', auth, requireRole('admin'), async (req, res) => {
+    const result = await db.prepare("UPDATE users SET hostinger_synced = 1 WHERE email LIKE '%@primeaxisit.com' AND hostinger_synced = 0").run();
+    res.json({ message: result.changes + ' user(s) marked as synced', count: result.changes });
+});
+
 // ============================================================
 //  EMPLOYEE MANAGEMENT (HR + Admin)
 // ============================================================
