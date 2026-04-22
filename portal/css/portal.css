@@ -610,7 +610,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     align-items: center;
     gap: 12px;
 }
-.offer-preview .lh-logo { height: 44px; }
+.offer-preview .lh-logo { height: 64px; object-fit: contain; }
 .offer-preview .lh-company h1 { font-size: 18px; font-weight: 700; color: #1a1a1a; margin: 0; line-height: 1.2; }
 .offer-preview .lh-company p { font-size: 11px; color: #4f6ef7; margin: 2px 0 0; font-weight: 600; letter-spacing: 0.5px; }
 .offer-preview .lh-right { text-align: right; font-size: 11px; color: #666; line-height: 1.6; }
