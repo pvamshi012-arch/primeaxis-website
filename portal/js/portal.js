@@ -147,7 +147,18 @@ const navConfig = {
             { id: 'feed', icon: 'fa-comments', label: 'Feed / Chat' },
             { id: 'users', icon: 'fa-user-shield', label: 'Manage Users' },
         ]},
-        { section: 'HR', items: [
+        { section: 'Self Service', items: [
+            { id: 'my-profile', icon: 'fa-user', label: 'My Profile' },
+            { id: 'my-offer', icon: 'fa-file-contract', label: 'My Offer Letter' },
+            { id: 'my-timesheets', icon: 'fa-clock', label: 'My Timesheets' },
+            { id: 'my-leaves', icon: 'fa-calendar-check', label: 'My Leaves' },
+            { id: 'my-payslips', icon: 'fa-receipt', label: 'My Payslips' },
+            { id: 'my-tax', icon: 'fa-file-invoice-dollar', label: 'My Tax Declaration' },
+            { id: 'my-form16', icon: 'fa-file-shield', label: 'My Form 16' },
+            { id: 'my-training', icon: 'fa-graduation-cap', label: 'My Training' },
+            { id: 'my-resignation', icon: 'fa-person-walking-arrow-right', label: 'My Resignation' },
+        ]},
+        { section: 'HR Management', items: [
             { id: 'employees', icon: 'fa-users', label: 'Employees' },
             { id: 'offers', icon: 'fa-file-contract', label: 'Offer Letters' },
             { id: 'relieving', icon: 'fa-file-circle-check', label: 'Relieving Letters' },
@@ -174,6 +185,7 @@ const navConfig = {
         ]},
         { section: 'Support', items: [
             { id: 'tickets', icon: 'fa-ticket', label: 'Support Tickets' },
+            { id: 'my-tickets', icon: 'fa-ticket', label: 'Raise Ticket' },
         ]}
     ],
     hr: [
