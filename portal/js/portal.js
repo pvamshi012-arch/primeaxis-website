@@ -858,7 +858,7 @@ window.createOffer = async () => {
     try {
         const resp = await fetch('/api/offers', {
             method: 'POST',
-            headers: { 'Authorization': 'Bearer ' + token },
+            headers: { 'Authorization': 'Bearer ' + token() },
             body: formData
         });
         if (resp.status === 401) { localStorage.clear(); window.location.href = '/portal/login.html'; return; }
