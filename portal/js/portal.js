@@ -1691,8 +1691,16 @@ window.acceptOffer = async function(offerId) {
 
     try {
         const signature = canvas.toDataURL('image/png');
-        await apiPut('/my/offer/accept', { signature });
+        const result = await apiPut('/my/offer/accept', { signature });
         toast('Offer accepted successfully! Welcome to PrimeAxis IT Solutions!', 'success');
+        // If role changed from candidate to employee, refresh session
+        if (result && result.roleChanged) {
+            const stored = JSON.parse(localStorage.getItem('primeaxis_user') || '{}');
+            stored.role = 'employee';
+            localStorage.setItem('primeaxis_user', JSON.stringify(stored));
+            setTimeout(() => window.location.reload(), 1500);
+            return;
+        }
         pageMyOffer();
     } catch (e) {
         toast(e.message, 'error');

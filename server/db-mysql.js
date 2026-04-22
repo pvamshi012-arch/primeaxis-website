@@ -67,7 +67,7 @@ async function initDatabase() {
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 email VARCHAR(255) UNIQUE NOT NULL,
                 password VARCHAR(255) NOT NULL,
-                role ENUM('admin','hr','manager','accountant','employee') NOT NULL,
+                role ENUM('admin','hr','manager','accountant','employee','candidate') NOT NULL,
                 name VARCHAR(255) NOT NULL,
                 is_active TINYINT DEFAULT 1,
                 must_change_password TINYINT DEFAULT 1,
@@ -664,6 +664,7 @@ async function initDatabase() {
         try { await conn.query("ALTER TABLE offer_letters ADD COLUMN candidate_signature LONGTEXT"); } catch(e) {}
         try { await conn.query("ALTER TABLE offer_letters ADD COLUMN accepted_at DATETIME"); } catch(e) {}
         try { await conn.query("ALTER TABLE users ADD COLUMN temp_password_expires DATETIME"); } catch(e) {}
+        try { await conn.query("ALTER TABLE users MODIFY COLUMN role ENUM('admin','hr','manager','accountant','employee','candidate') NOT NULL"); } catch(e) {}
 
         // ===== SEED DEFAULT ADMIN =====
         const [adminRows] = await conn.query("SELECT id FROM users WHERE role = 'admin' LIMIT 1");

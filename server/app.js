@@ -491,7 +491,10 @@ app.put('/api/my/offer/accept', auth, async (req, res) => {
         } catch(e) { console.error('Offer accept email failed:', e.message); }
     }
 
-    res.json({ message: 'Offer accepted successfully' });
+    // Upgrade user role from candidate to employee
+    await db.prepare("UPDATE users SET role = 'employee' WHERE id = ? AND role = 'candidate'").run(req.user.id);
+
+    res.json({ message: 'Offer accepted successfully', roleChanged: true });
 });
 
 app.post('/api/offers', auth, requireRole('admin', 'hr'), upload.fields([
@@ -660,7 +663,7 @@ app.put('/api/offers/:id/release', auth, requireRole('admin', 'hr'), async (req,
             const hash = bcrypt.hashSync(tempPassword, 10);
             const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
             const result = await db.prepare('INSERT INTO users (email, password, role, name, must_change_password, temp_password_expires, is_active) VALUES (?, ?, ?, ?, 1, ?, 1)')
-                .run(candidateEmail, hash, 'employee', offer.employee_name, expires);
+                .run(candidateEmail, hash, 'candidate', offer.employee_name, expires);
             existingUser = { id: result.lastInsertRowid };
             // Link employee to user
             const emp = await db.prepare('SELECT id FROM employees WHERE email = ?').get(candidateEmail);
