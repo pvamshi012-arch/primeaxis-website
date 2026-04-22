@@ -556,7 +556,6 @@ window.verifyAllEmails = async () => {
     toast('Verification complete');
     pageUsers();
 };
-}
 
 window.showCreateUserModal = () => {
     openModal('Create New User', `
