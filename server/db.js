@@ -25,6 +25,7 @@ db.exec(`
         name TEXT NOT NULL,
         is_active INTEGER DEFAULT 1,
         must_change_password INTEGER DEFAULT 1,
+        hostinger_synced INTEGER DEFAULT 0,
         created_at TEXT DEFAULT (datetime('now')),
         updated_at TEXT DEFAULT (datetime('now'))
     );

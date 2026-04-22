@@ -71,10 +71,14 @@ async function initDatabase() {
                 name VARCHAR(255) NOT NULL,
                 is_active TINYINT DEFAULT 1,
                 must_change_password TINYINT DEFAULT 1,
+                hostinger_synced TINYINT DEFAULT 0,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             )
         `);
+
+        // Add hostinger_synced column if not exists (for existing DBs)
+        await conn.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS hostinger_synced TINYINT DEFAULT 0`);
 
         await conn.query(`
             CREATE TABLE IF NOT EXISTS employees (

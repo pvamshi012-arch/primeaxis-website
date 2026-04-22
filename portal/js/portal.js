@@ -420,8 +420,21 @@ async function pageDashboard() {
 
     // Quick Actions for Admin/HR
     if (['admin', 'hr'].includes(u.role)) {
+        let unsyncedHtml = '';
+        try {
+            const allUsers = await apiGet('/users');
+            const unsyncedCount = allUsers.filter(u => !u.hostinger_synced && u.email.endsWith('@primeaxisit.com')).length;
+            if (unsyncedCount > 0) {
+                unsyncedHtml = `<div style="background:linear-gradient(135deg,#1a1207,#261c0a);border:1px solid #854d0e;border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px">
+                    <i class="fas fa-triangle-exclamation" style="color:#f59e0b"></i>
+                    <span style="color:#fbbf24;font-size:13px"><strong>${unsyncedCount}</strong> user${unsyncedCount > 1 ? 's' : ''} not synced with Hostinger email</span>
+                    <button class="btn btn-sm btn-primary" onclick="navigate('users')" style="margin-left:auto;font-size:11px"><i class="fas fa-sync"></i> Fix Now</button>
+                </div>`;
+            }
+        } catch {}
         html += `<div class="table-card" style="margin-top:20px;padding:16px">
             <h3 style="margin-bottom:12px"><i class="fas fa-bolt" style="color:#f59e0b"></i> Quick Actions</h3>
+            ${unsyncedHtml}
             <div style="display:flex;flex-wrap:wrap;gap:10px">
                 <a href="https://hpanel.hostinger.com/email/primeaxisit.com/accounts" target="_blank" class="btn btn-sm btn-secondary" style="text-decoration:none"><i class="fas fa-envelope"></i> Hostinger Email Panel</a>
                 <button class="btn btn-sm btn-primary" onclick="showCreateUserModal()"><i class="fas fa-user-plus"></i> Create Portal User</button>
@@ -476,19 +489,33 @@ function statCard(icon, color, value, label) {
 async function pageUsers() {
     pageTitle.textContent = 'Manage Users';
     const users = await apiGet('/users');
+    const unsynced = users.filter(u => !u.hostinger_synced && u.email.endsWith('@primeaxisit.com'));
     content.innerHTML = `
+        ${unsynced.length ? `<div style="background:linear-gradient(135deg,#1a1207,#261c0a);border:1px solid #854d0e;border-radius:12px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
+            <i class="fas fa-triangle-exclamation" style="color:#f59e0b;font-size:20px"></i>
+            <div><strong style="color:#fbbf24">${unsynced.length} user${unsynced.length > 1 ? 's' : ''} not synced with Hostinger</strong>
+            <p style="color:#a3845a;font-size:12px;margin:4px 0 0">Create matching email accounts on <a href="https://hpanel.hostinger.com/email/primeaxisit.com/accounts" target="_blank" style="color:#48cae4">Hostinger Email Panel</a>, then click Verify to sync.</p></div>
+        </div>` : ''}
         <div class="table-card">
             <div class="table-header">
                 <h3><i class="fas fa-user-shield"></i> All Users (${users.length})</h3>
-                <button class="btn btn-primary" onclick="showCreateUserModal()"><i class="fas fa-plus"></i> Add User</button>
+                <div style="display:flex;gap:8px">
+                    <button class="btn btn-secondary" onclick="verifyAllEmails()" title="Verify all unsynced emails"><i class="fas fa-sync"></i> Verify All</button>
+                    <button class="btn btn-primary" onclick="showCreateUserModal()"><i class="fas fa-plus"></i> Add User</button>
+                </div>
             </div>
             <div class="table-wrapper"><table>
-                <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+                <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Hostinger Sync</th><th>Status</th><th>Actions</th></tr></thead>
                 <tbody>
                     ${users.map(u => `<tr>
                         <td><strong>${esc(u.name)}</strong></td>
                         <td>${esc(u.email)}</td>
                         <td><span class="badge-status active" style="text-transform:capitalize">${u.role}</span></td>
+                        <td id="sync-cell-${u.id}">${u.email.endsWith('@primeaxisit.com') ?
+                            (u.hostinger_synced ?
+                                `<span class="badge-status active" style="cursor:pointer" onclick="toggleHostingerSync(${u.id},false)" title="Click to mark unsynced"><i class="fas fa-check-circle"></i> Synced</span>` :
+                                `<span class="badge-status inactive" style="cursor:pointer" onclick="verifyEmail(${u.id})" title="Click to verify"><i class="fas fa-times-circle"></i> Not Synced</span>`)
+                            : '<span style="color:#64748b;font-size:12px">N/A</span>'}</td>
                         <td>${u.is_active ? '<span class="badge-status active">Active</span>' : '<span class="badge-status inactive">Inactive</span>'}</td>
                         <td>
                             <button class="btn btn-sm btn-secondary" onclick="resetPasswordModal(${u.id},'${esc(u.name)}')"><i class="fas fa-key"></i></button>
@@ -498,6 +525,37 @@ async function pageUsers() {
                 </tbody>
             </table></div>
         </div>`;
+}
+
+window.verifyEmail = async (id) => {
+    const cell = document.getElementById('sync-cell-' + id);
+    if (cell) cell.innerHTML = '<span style="color:#48cae4;font-size:12px"><i class="fas fa-spinner fa-spin"></i> Verifying...</span>';
+    try {
+        const result = await apiPost(`/users/${id}/verify-email`);
+        toast(result.message, result.verified ? 'success' : 'warning');
+        pageUsers();
+    } catch (e) { toast(e.message, 'error'); pageUsers(); }
+};
+
+window.toggleHostingerSync = async (id, synced) => {
+    try {
+        await apiPut(`/users/${id}/hostinger-sync`, { synced });
+        toast(synced ? 'Marked as synced' : 'Marked as unsynced');
+        pageUsers();
+    } catch (e) { toast(e.message, 'error'); }
+};
+
+window.verifyAllEmails = async () => {
+    const users = await apiGet('/users');
+    const unsynced = users.filter(u => !u.hostinger_synced && u.email.endsWith('@primeaxisit.com'));
+    if (!unsynced.length) { toast('All users are already synced!'); return; }
+    toast(`Verifying ${unsynced.length} email(s)...`, 'info');
+    for (const u of unsynced) {
+        try { await apiPost(`/users/${u.id}/verify-email`); } catch {}
+    }
+    toast('Verification complete');
+    pageUsers();
+};
 }
 
 window.showCreateUserModal = () => {

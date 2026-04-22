@@ -179,7 +179,7 @@ app.post('/api/auth/change-password', auth, async (req, res) => {
 //  USER MANAGEMENT (Admin only)
 // ============================================================
 app.get('/api/users', auth, requireRole('admin'), async (req, res) => {
-    const users = await db.prepare('SELECT id, email, role, name, is_active, created_at FROM users ORDER BY created_at DESC').all();
+    const users = await db.prepare('SELECT id, email, role, name, is_active, hostinger_synced, created_at FROM users ORDER BY created_at DESC').all();
     res.json(users);
 });
 
@@ -227,6 +227,60 @@ app.post('/api/users/:id/reset-password', auth, requireRole('admin'), async (req
     await db.prepare('UPDATE users SET password = ?, must_change_password = 1, updated_at = datetime("now") WHERE id = ?')
         .run(hash, req.params.id);
     res.json({ message: 'Password reset successfully' });
+});
+
+// Mark user as synced/unsynced with Hostinger
+app.put('/api/users/:id/hostinger-sync', auth, requireRole('admin'), async (req, res) => {
+    const { synced } = req.body;
+    await db.prepare('UPDATE users SET hostinger_synced = ? WHERE id = ?').run(synced ? 1 : 0, req.params.id);
+    res.json({ message: synced ? 'Marked as synced with Hostinger' : 'Marked as unsynced' });
+});
+
+// Verify email exists on Hostinger SMTP server
+app.post('/api/users/:id/verify-email', auth, requireRole('admin'), async (req, res) => {
+    const user = await db.prepare('SELECT id, email FROM users WHERE id = ?').get(req.params.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const net = require('net');
+    const email = user.email;
+    const domain = email.split('@')[1];
+    if (domain !== 'primeaxisit.com') {
+        return res.json({ verified: false, message: 'Not a @primeaxisit.com email - skipping verification' });
+    }
+
+    try {
+        const result = await new Promise((resolve, reject) => {
+            const socket = net.createConnection(25, 'smtp.hostinger.com');
+            let step = 0, response = '';
+            const timeout = setTimeout(() => { socket.destroy(); reject(new Error('SMTP timeout')); }, 15000);
+
+            socket.setEncoding('utf8');
+            socket.on('data', (data) => {
+                response += data;
+                if (step === 0 && data.includes('220')) {
+                    step = 1; socket.write('EHLO primeaxisit.com\r\n');
+                } else if (step === 1 && data.includes('250')) {
+                    step = 2; socket.write('MAIL FROM:<verify@primeaxisit.com>\r\n');
+                } else if (step === 2 && data.includes('250')) {
+                    step = 3; socket.write(`RCPT TO:<${email}>\r\n`);
+                } else if (step === 3) {
+                    const code = parseInt(data.substring(0, 3));
+                    clearTimeout(timeout);
+                    socket.write('QUIT\r\n');
+                    socket.end();
+                    resolve({ verified: code === 250, code });
+                }
+            });
+            socket.on('error', (err) => { clearTimeout(timeout); reject(err); });
+        });
+
+        if (result.verified) {
+            await db.prepare('UPDATE users SET hostinger_synced = 1 WHERE id = ?').run(user.id);
+        }
+        res.json({ verified: result.verified, message: result.verified ? 'Email verified on Hostinger - marked as synced' : 'Email NOT found on Hostinger SMTP (code ' + result.code + ')' });
+    } catch (err) {
+        res.json({ verified: false, message: 'Could not verify via SMTP: ' + err.message + '. You can manually mark as synced.' });
+    }
 });
 
 // ============================================================
