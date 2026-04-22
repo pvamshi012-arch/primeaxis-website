@@ -96,6 +96,18 @@ app.use('/api/uploads', async (req, res, next) => {
 }, express.static(uploadsDir, { dotfiles: 'deny' }));
 
 // JWT Auth Middleware
+
+// Shared email sender
+async function sendEmail(to, subject, html, from) {
+    const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST || 'smtp.hostinger.com',
+        port: parseInt(process.env.SMTP_PORT) || 465,
+        secure: true,
+        auth: { user: from || 'hr@primeaxisit.com', pass: process.env.SMTP_PASS || 'Welcome@2026!' },
+    });
+    await transporter.sendMail({ from: `"PrimeAxis IT Solutions" <${from || 'hr@primeaxisit.com'}>`, to, subject, html });
+}
+
 async function auth(req, res, next) {
     const header = req.headers.authorization;
     if (!header || !header.startsWith('Bearer ')) {
@@ -430,6 +442,35 @@ app.post('/api/offers', auth, requireRole('admin', 'hr'), upload.fields([
 
 // Multer error handler
 // Multer error handler
+
+// Contact form - sends email to info@primeaxisit.com
+app.post('/api/contact', async (req, res) => {
+    const { name, email, phone, service, message } = req.body;
+    if (!name || !email || !message) return res.status(400).json({ error: 'Name, email, and message are required' });
+    try {
+        await sendEmail('info@primeaxisit.com', `Website Inquiry from ${name}`,
+            `<div style="font-family:Segoe UI,Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
+                <div style="background:linear-gradient(135deg,#001233,#0077b6);padding:20px 28px">
+                    <h2 style="color:#fff;margin:0;font-size:18px">New Contact Form Submission</h2>
+                </div>
+                <div style="padding:24px 28px">
+                    <table style="width:100%;border-collapse:collapse;font-size:14px">
+                        <tr><td style="padding:8px 0;color:#64748b;width:120px"><strong>Name</strong></td><td style="padding:8px 0;color:#0f172a">${name}</td></tr>
+                        <tr><td style="padding:8px 0;color:#64748b"><strong>Email</strong></td><td style="padding:8px 0"><a href="mailto:${email}" style="color:#0077b6">${email}</a></td></tr>
+                        <tr><td style="padding:8px 0;color:#64748b"><strong>Phone</strong></td><td style="padding:8px 0;color:#0f172a">${phone || 'Not provided'}</td></tr>
+                        <tr><td style="padding:8px 0;color:#64748b"><strong>Service</strong></td><td style="padding:8px 0;color:#0f172a">${service || 'Not specified'}</td></tr>
+                        <tr><td style="padding:8px 0;color:#64748b;vertical-align:top"><strong>Message</strong></td><td style="padding:8px 0;color:#0f172a;line-height:1.6">${message}</td></tr>
+                    </table>
+                </div>
+                <div style="background:#f1f5f9;padding:12px 28px;font-size:12px;color:#94a3b8">Sent from testing.primeaxisit.com contact form</div>
+            </div>`, 'info@primeaxisit.com');
+        res.json({ message: 'Message sent successfully' });
+    } catch (err) {
+        console.error('Contact form email failed:', err.message);
+        res.status(500).json({ error: 'Failed to send message. Please try again.' });
+    }
+});
+
 app.use((err, req, res, next) => {
     if (err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') return res.status(400).json({ error: 'File too large. Maximum 5MB per file.' });
@@ -450,6 +491,30 @@ app.put('/api/offers/:id/submit', auth, requireRole('admin', 'hr'), async (req, 
     for (const mgr of managers) {
         await db.prepare('INSERT INTO notifications (user_id, title, message, type, link) VALUES (?, ?, ?, ?, ?)')
             .run(mgr.id, 'Offer Letter Approval Required', `Offer for ${offer.employee_name} (${offer.reference_no}) needs your approval`, 'warning', '/portal/#offers');
+    }
+    // Email all managers about the offer needing approval
+    const mgrUsers = await db.prepare("SELECT email FROM users WHERE role = 'manager' AND is_active = 1").all();
+    for (const mgr of mgrUsers) {
+        try {
+            await sendEmail(mgr.email, `Offer Approval Required - ${offer.reference_no}`,
+                `<div style="font-family:Segoe UI,Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
+                    <div style="background:linear-gradient(135deg,#001233,#0077b6);padding:20px 28px">
+                        <h2 style="color:#fff;margin:0;font-size:18px">Offer Letter - Approval Required</h2>
+                    </div>
+                    <div style="padding:24px 28px">
+                        <p style="color:#475569;font-size:15px">An offer letter needs your approval:</p>
+                        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin:16px 0">
+                            <table style="width:100%;border-collapse:collapse;font-size:14px">
+                                <tr><td style="padding:6px 0;color:#64748b">Reference</td><td style="padding:6px 0;font-weight:600;text-align:right">${offer.reference_no}</td></tr>
+                                <tr><td style="padding:6px 0;color:#64748b">Candidate</td><td style="padding:6px 0;font-weight:600;text-align:right">${offer.employee_name}</td></tr>
+                            </table>
+                        </div>
+                        <div style="text-align:center;margin:20px 0">
+                            <a href="https://testing.primeaxisit.com/portal/#offers" style="display:inline-block;background:linear-gradient(135deg,#0077b6,#00b4d8);color:#fff;padding:10px 28px;border-radius:6px;text-decoration:none;font-weight:600">Review Offer</a>
+                        </div>
+                    </div>
+                </div>`);
+        } catch (e) { console.error('Failed to email manager:', e.message); }
     }
     res.json({ message: 'Submitted for approval' });
 });
@@ -1781,13 +1846,38 @@ app.post('/api/bgv/invite', auth, requireRole('admin', 'hr'), async (req, res) =
         VALUES (?, ?, ?, ?, ?, ?)
     `).run(offer_id, offer.employee_name, candidate_email, hashedPwd, accessToken, req.user.id);
 
+    // Send BGV invite email to candidate
+    try {
+        await sendEmail(candidate_email, `Background Verification - ${offer.employee_name} | PrimeAxis IT`,
+            `<div style="font-family:Segoe UI,Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
+                <div style="background:linear-gradient(135deg,#001233,#0077b6);padding:20px 28px">
+                    <h2 style="color:#fff;margin:0;font-size:18px">Background Verification Form</h2>
+                </div>
+                <div style="padding:24px 28px">
+                    <p style="color:#475569;font-size:15px">Dear ${offer.employee_name},</p>
+                    <p style="color:#475569;font-size:14px;line-height:1.7">As part of your onboarding at PrimeAxis IT Solutions, please complete the Background Verification form using the credentials below:</p>
+                    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin:16px 0">
+                        <table style="width:100%;border-collapse:collapse;font-size:14px">
+                            <tr><td style="padding:6px 0;color:#64748b">Email</td><td style="padding:6px 0;font-weight:600;text-align:right">${candidate_email}</td></tr>
+                            <tr><td style="padding:6px 0;color:#64748b">Temporary Password</td><td style="padding:6px 0;font-weight:700;color:#059669;text-align:right">${tempPassword}</td></tr>
+                        </table>
+                    </div>
+                    <div style="text-align:center;margin:20px 0">
+                        <a href="https://testing.primeaxisit.com/portal/bgv.html?token=${accessToken}" style="display:inline-block;background:linear-gradient(135deg,#0077b6,#00b4d8);color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-weight:600;font-size:15px">Complete BGV Form</a>
+                    </div>
+                    <p style="color:#94a3b8;font-size:13px">If you have questions, contact HR at <a href="mailto:hr@primeaxisit.com" style="color:#0077b6">hr@primeaxisit.com</a></p>
+                </div>
+            </div>`, 'admin@primeaxisit.com');
+        console.log('BGV invite email sent to', candidate_email);
+    } catch (e) { console.error('Failed to send BGV email:', e.message); }
+
     res.json({
         id: result.lastInsertRowid,
         candidate_name: offer.employee_name,
         candidate_email,
         temp_password: tempPassword,
         bgv_link: `/portal/bgv.html?token=${accessToken}`,
-        message: 'BGV invite created. Share the link and temporary password with the candidate.'
+        message: 'BGV invite created and emailed to candidate.'
     });
 });
 
@@ -2043,6 +2133,32 @@ app.post('/api/resignations', auth, async (req, res) => {
             .run(a.id, 'Resignation Submitted', `${emp.name} (${emp.employee_code}) has submitted resignation. Last working day: ${lastWorkingDay}`, 'warning', '/portal/#resignations');
     }
 
+    // Email managers about new resignation
+    const mgrList = await db.prepare("SELECT email FROM users WHERE role IN ('manager','hr') AND is_active = 1").all();
+    for (const m of mgrList) {
+        try {
+            await sendEmail(m.email, `Resignation Submitted - ${emp.name}`,
+                `<div style="font-family:Segoe UI,Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
+                    <div style="background:linear-gradient(135deg,#92400e,#dc2626);padding:20px 28px">
+                        <h2 style="color:#fff;margin:0;font-size:18px">Resignation Notice</h2>
+                    </div>
+                    <div style="padding:24px 28px">
+                        <p style="color:#475569;font-size:15px"><strong>${emp.name}</strong> (${emp.employee_code}) has submitted their resignation.</p>
+                        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin:16px 0">
+                            <table style="width:100%;border-collapse:collapse;font-size:14px">
+                                <tr><td style="padding:6px 0;color:#64748b">Department</td><td style="padding:6px 0;font-weight:600;text-align:right">${emp.department}</td></tr>
+                                <tr><td style="padding:6px 0;color:#64748b">Last Working Day</td><td style="padding:6px 0;font-weight:600;text-align:right">${lastWorkingDay}</td></tr>
+                                <tr><td style="padding:6px 0;color:#64748b">Reason</td><td style="padding:6px 0;text-align:right">${reason}</td></tr>
+                            </table>
+                        </div>
+                        <div style="text-align:center;margin:20px 0">
+                            <a href="https://testing.primeaxisit.com/portal/#resignations" style="display:inline-block;background:#dc2626;color:#fff;padding:10px 28px;border-radius:6px;text-decoration:none;font-weight:600">Review Resignation</a>
+                        </div>
+                    </div>
+                </div>`);
+        } catch (e) { console.error('Failed to email about resignation:', e.message); }
+    }
+
     res.json({ id: result.lastInsertRowid, last_working_day: lastWorkingDay, message: `Resignation submitted. Notice period: 90 days. Last working day: ${lastWorkingDay}` });
 });
 
@@ -2067,6 +2183,33 @@ app.put('/api/resignations/:id/approve/:dept', auth, async (req, res) => {
         await db.prepare("UPDATE resignations SET status = 'completed' WHERE id = ?").run(req.params.id);
         // Update employee status
         await db.prepare("UPDATE employees SET status = 'inactive', date_of_leaving = ? WHERE id = ?").run(updated.last_working_day, updated.employee_id);
+    }
+
+    // Email HR/Admin about resignation approval
+    const empInfo = await db.prepare('SELECT e.name, e.employee_code, e.department FROM employees e JOIN resignations r ON e.id = r.employee_id WHERE r.id = ?').get(req.params.id);
+    const hrAdmins = await db.prepare("SELECT email FROM users WHERE role IN ('hr','admin') AND is_active = 1").all();
+    for (const h of hrAdmins) {
+        try {
+            await sendEmail(h.email, `Resignation ${dept.toUpperCase()} Approved - ${empInfo ? empInfo.name : 'Employee'}`,
+                `<div style="font-family:Segoe UI,Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
+                    <div style="background:linear-gradient(135deg,#065f46,#059669);padding:20px 28px">
+                        <h2 style="color:#fff;margin:0;font-size:18px">Resignation Approval Update</h2>
+                    </div>
+                    <div style="padding:24px 28px">
+                        <p style="color:#475569;font-size:15px"><strong>${dept.toUpperCase()}</strong> has approved the resignation of <strong>${empInfo ? empInfo.name : 'Employee'}</strong>${empInfo ? ' (' + empInfo.employee_code + ')' : ''}.</p>
+                        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin:16px 0;font-size:14px">
+                            <p style="margin:4px 0"><strong>Manager:</strong> ${updated.manager_approval ? '&#9989; Approved' : '&#9744; Pending'}</p>
+                            <p style="margin:4px 0"><strong>HR:</strong> ${updated.hr_approval ? '&#9989; Approved' : '&#9744; Pending'}</p>
+                            <p style="margin:4px 0"><strong>Finance:</strong> ${updated.finance_approval ? '&#9989; Approved' : '&#9744; Pending'}</p>
+                            <p style="margin:4px 0"><strong>Admin:</strong> ${updated.admin_approval ? '&#9989; Approved' : '&#9744; Pending'}</p>
+                        </div>
+                        ${updated.manager_approval && updated.hr_approval && updated.finance_approval && updated.admin_approval ? '<p style="color:#059669;font-weight:700;font-size:16px;text-align:center">All approvals complete - Resignation finalized</p>' : ''}
+                        <div style="text-align:center;margin:20px 0">
+                            <a href="https://testing.primeaxisit.com/portal/#resignations" style="display:inline-block;background:#059669;color:#fff;padding:10px 28px;border-radius:6px;text-decoration:none;font-weight:600">View Details</a>
+                        </div>
+                    </div>
+                </div>`);
+        } catch (e) { console.error('Resign approval email failed:', e.message); }
     }
 
     res.json({ message: `${dept} approval granted` });
