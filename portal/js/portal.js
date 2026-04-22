@@ -153,6 +153,10 @@ const navConfig = {
             { id: 'relieving', icon: 'fa-file-circle-check', label: 'Relieving Letters' },
             { id: 'resignations', icon: 'fa-person-walking-arrow-right', label: 'Resignations' },
         ]},
+        { section: 'Recruitment', items: [
+            { id: 'job-postings', icon: 'fa-briefcase', label: 'Job Postings' },
+            { id: 'applications', icon: 'fa-file-lines', label: 'Applications' },
+        ]},
         { section: 'Operations', items: [
             { id: 'timesheets', icon: 'fa-clock', label: 'Timesheets' },
             { id: 'leaves', icon: 'fa-calendar-check', label: 'Leaves' },
@@ -192,6 +196,10 @@ const navConfig = {
             { id: 'offers', icon: 'fa-file-contract', label: 'Offer Letters' },
             { id: 'relieving', icon: 'fa-file-circle-check', label: 'Relieving Letters' },
             { id: 'resignations', icon: 'fa-person-walking-arrow-right', label: 'Resignations' },
+        ]},
+        { section: 'Recruitment', items: [
+            { id: 'job-postings', icon: 'fa-briefcase', label: 'Job Postings' },
+            { id: 'applications', icon: 'fa-file-lines', label: 'Applications' },
         ]},
         { section: 'Operations', items: [
             { id: 'leaves', icon: 'fa-calendar-check', label: 'Leaves' },
@@ -338,6 +346,8 @@ function renderPage(page) {
         'tax-declarations': pageTaxDeclarationsAdmin,
         form16: pageForm16,
         training: pageTraining,
+        'job-postings': pageJobPostings,
+        'applications': pageApplications,
         'my-profile': pageMyProfile,
         'my-offer': pageMyOffer,
         'my-timesheets': pageMyTimesheets,
@@ -395,6 +405,19 @@ async function pageDashboard() {
     }
 
     html += '</div>';
+
+    // Quick Actions for Admin/HR
+    if (['admin', 'hr'].includes(u.role)) {
+        html += `<div class="table-card" style="margin-top:20px;padding:16px">
+            <h3 style="margin-bottom:12px"><i class="fas fa-bolt" style="color:#f59e0b"></i> Quick Actions</h3>
+            <div style="display:flex;flex-wrap:wrap;gap:10px">
+                <a href="https://hpanel.hostinger.com/email/primeaxisit.com/accounts" target="_blank" class="btn btn-sm btn-secondary" style="text-decoration:none"><i class="fas fa-envelope"></i> Hostinger Email Panel</a>
+                <button class="btn btn-sm btn-primary" onclick="showCreateUserModal()"><i class="fas fa-user-plus"></i> Create Portal User</button>
+                <button class="btn btn-sm btn-secondary" onclick="navigate('employees')"><i class="fas fa-users"></i> Employees</button>
+                <button class="btn btn-sm btn-secondary" onclick="navigate('job-postings')"><i class="fas fa-briefcase"></i> Job Postings</button>
+            </div>
+        </div>`;
+    }
 
     // Anniversaries and training widgets
     try {
@@ -467,13 +490,38 @@ async function pageUsers() {
 
 window.showCreateUserModal = () => {
     openModal('Create New User', `
+        <div style="background:linear-gradient(135deg,#0f172a,#1e293b);border:1px solid #334155;border-radius:10px;padding:14px 16px;margin-bottom:16px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                <i class="fas fa-envelope" style="color:#48cae4"></i>
+                <strong style="color:#e2e8f0;font-size:13px">Hostinger Email Sync</strong>
+                <a href="https://hpanel.hostinger.com/email/primeaxisit.com/accounts" target="_blank" style="margin-left:auto;color:#48cae4;font-size:12px;text-decoration:none"><i class="fas fa-external-link-alt"></i> Open Hostinger Panel</a>
+            </div>
+            <ol style="color:#94a3b8;font-size:12px;margin:0;padding-left:18px;line-height:1.8">
+                <li>Create email account on <strong style="color:#e2e8f0">Hostinger</strong> first (e.g. john@primeaxisit.com)</li>
+                <li>Use the <strong style="color:#e2e8f0">same email &amp; temp password</strong> below</li>
+                <li>Employee logs in to both email &amp; portal with same credentials</li>
+            </ol>
+        </div>
         <div class="form-grid">
             <div class="form-group"><label>Full Name</label><input class="form-control" id="mu_name" placeholder="John Doe"></div>
-            <div class="form-group"><label>Email</label><input class="form-control" id="mu_email" placeholder="john@primeaxisit.com" type="email"></div>
+            <div class="form-group">
+                <label>Email (must be @primeaxisit.com)</label>
+                <div style="display:flex;align-items:center;gap:0">
+                    <input class="form-control" id="mu_email_user" placeholder="john" style="border-radius:8px 0 0 8px;border-right:none">
+                    <span style="background:#1e293b;border:1px solid var(--p-border);padding:8px 12px;color:#48cae4;font-size:13px;font-weight:600;white-space:nowrap;border-radius:0 8px 8px 0">@primeaxisit.com</span>
+                </div>
+            </div>
             <div class="form-group"><label>Role</label><select class="form-control" id="mu_role">
                 <option value="employee">Employee</option><option value="hr">HR</option><option value="manager">Manager</option><option value="accountant">Accountant</option>
             </select></div>
-            <div class="form-group"><label>Temporary Password</label><input class="form-control" id="mu_pass" placeholder="Min 6 characters"></div>
+            <div class="form-group">
+                <label>Temporary Password</label>
+                <div style="position:relative">
+                    <input class="form-control" id="mu_pass" placeholder="Same as Hostinger temp password" type="password" style="padding-right:40px">
+                    <button type="button" onclick="const i=document.getElementById('mu_pass');i.type=i.type==='password'?'text':'password'" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:#94a3b8;cursor:pointer"><i class="fas fa-eye"></i></button>
+                </div>
+                <small style="color:#64748b;font-size:11px">Min 8 chars, uppercase, lowercase &amp; number. Use the same password you set on Hostinger.</small>
+            </div>
         </div>
         <button class="btn btn-primary" onclick="createUser()" style="margin-top:8px"><i class="fas fa-plus"></i> Create User</button>
     `);
@@ -481,8 +529,12 @@ window.showCreateUserModal = () => {
 
 window.createUser = async () => {
     try {
-        await apiPost('/users', { name: $('#mu_name').value, email: $('#mu_email').value, role: $('#mu_role').value, password: $('#mu_pass').value });
-        toast('User created successfully');
+        const emailUser = $('#mu_email_user').value.trim().toLowerCase();
+        if (!emailUser) return toast('Please enter email username', 'error');
+        if (!/^[a-z0-9._-]+$/.test(emailUser)) return toast('Email username can only contain letters, numbers, dots, hyphens', 'error');
+        const email = emailUser + '@primeaxisit.com';
+        await apiPost('/users', { name: $('#mu_name').value, email, role: $('#mu_role').value, password: $('#mu_pass').value });
+        toast('User created successfully! Employee can now login with ' + email);
         closeModal();
         pageUsers();
     } catch (e) { toast(e.message, 'error'); }
@@ -490,7 +542,10 @@ window.createUser = async () => {
 
 window.resetPasswordModal = (id, name) => {
     openModal('Reset Password — ' + name, `
-        <div class="form-group"><label>New Password</label><input class="form-control" id="rp_pass" placeholder="Min 6 characters"></div>
+        <div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px 14px;margin-bottom:12px">
+            <p style="color:#f59e0b;font-size:12px;margin:0"><i class="fas fa-triangle-exclamation"></i> Remember to also update the password on <a href="https://hpanel.hostinger.com/email/primeaxisit.com/accounts" target="_blank" style="color:#48cae4">Hostinger Email Panel</a> to keep them in sync.</p>
+        </div>
+        <div class="form-group"><label>New Password</label><input class="form-control" id="rp_pass" placeholder="Min 8 chars, uppercase, lowercase & number"></div>
         <button class="btn btn-primary" onclick="doResetPassword(${id})" style="margin-top:8px"><i class="fas fa-key"></i> Reset</button>
     `);
 };
@@ -662,13 +717,13 @@ window.showCreateOfferModal = () => {
         </div>
 
         <div class="doc-upload-section">
-            <h3><i class="fas fa-file-upload"></i> Mandatory Documents</h3>
-            <p class="doc-upload-note">All three documents must be uploaded to create an offer letter. Allowed: JPG, PNG, WebP, PDF (max 5MB each)</p>
+            <h3><i class="fas fa-file-upload"></i> Documents (Optional)</h3>
+            <p class="doc-upload-note">Upload documents if available. They can be added later. Allowed: JPG, PNG, WebP, PDF (max 5MB each)</p>
             <div class="doc-upload-grid">
                 <div class="doc-upload-card" id="card_aadhar">
                     <label class="doc-upload-label">
                         <i class="fas fa-id-card"></i>
-                        <span>Aadhar Card *</span>
+                        <span>Aadhar Card</span>
                         <input type="file" id="of_doc_aadhar" accept=".jpg,.jpeg,.png,.webp,.pdf" onchange="previewDocUpload(this, 'preview_aadhar', 'card_aadhar')" hidden>
                         <div class="doc-upload-btn">Choose File</div>
                     </label>
@@ -677,7 +732,7 @@ window.showCreateOfferModal = () => {
                 <div class="doc-upload-card" id="card_pan">
                     <label class="doc-upload-label">
                         <i class="fas fa-address-card"></i>
-                        <span>PAN Card *</span>
+                        <span>PAN Card</span>
                         <input type="file" id="of_doc_pan" accept=".jpg,.jpeg,.png,.webp,.pdf" onchange="previewDocUpload(this, 'preview_pan', 'card_pan')" hidden>
                         <div class="doc-upload-btn">Choose File</div>
                     </label>
@@ -686,7 +741,7 @@ window.showCreateOfferModal = () => {
                 <div class="doc-upload-card" id="card_photo">
                     <label class="doc-upload-label">
                         <i class="fas fa-camera"></i>
-                        <span>Candidate Photo *</span>
+                        <span>Candidate Photo</span>
                         <input type="file" id="of_doc_photo" accept=".jpg,.jpeg,.png,.webp,.pdf" onchange="previewDocUpload(this, 'preview_photo', 'card_photo')" hidden>
                         <div class="doc-upload-btn">Choose File</div>
                     </label>
@@ -754,25 +809,10 @@ window.previewBreakup = async () => {
 };
 
 window.createOffer = async () => {
-    // Validate mandatory documents
+    // Get optional document files
     const aadharFile = document.getElementById('of_doc_aadhar').files[0];
     const panFile = document.getElementById('of_doc_pan').files[0];
     const photoFile = document.getElementById('of_doc_photo').files[0];
-
-    let hasError = false;
-    ['card_aadhar', 'card_pan', 'card_photo'].forEach((cardId, i) => {
-        const card = document.getElementById(cardId);
-        if (![aadharFile, panFile, photoFile][i]) {
-            card.classList.add('error');
-            hasError = true;
-        } else {
-            card.classList.remove('error');
-        }
-    });
-
-    if (hasError) {
-        return toast('Please upload all 3 mandatory documents: Aadhar Card, PAN Card, and Photo', 'error');
-    }
 
     const formData = new FormData();
     formData.append('employee_name', $('#of_name').value);
@@ -799,9 +839,9 @@ window.createOffer = async () => {
         if (!$('#of_contract_end').value) return toast('Contract end date is required for contract employees', 'error');
         formData.append('contract_end_date', $('#of_contract_end').value);
     }
-    formData.append('doc_aadhar', aadharFile);
-    formData.append('doc_pan', panFile);
-    formData.append('doc_photo', photoFile);
+    if (aadharFile) formData.append('doc_aadhar', aadharFile);
+    if (panFile) formData.append('doc_pan', panFile);
+    if (photoFile) formData.append('doc_photo', photoFile);
 
     try {
         const resp = await fetch('/api/offers', {
@@ -3688,6 +3728,205 @@ window.deletePayslipExtra = async (id) => {
     if (!confirm('Delete this extra?')) return;
     try { await api(`/payslip-extras/${id}`, { method: 'DELETE' }); toast('Deleted'); pagePayslipExtras(); } catch (e) { toast(e.message, 'error'); }
 };
+
+// ===================================================================
+//  PAGE: JOB POSTINGS (HR/Admin)
+// ===================================================================
+async function pageJobPostings() {
+    pageTitle.textContent = 'Job Postings';
+    const jobs = await api('/api/admin/job-postings');
+    content.innerHTML = `
+        <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+            <div>
+                <h2 style="margin:0">Job Postings</h2>
+                <p style="color:#94a3b8;margin:4px 0 0">Manage career page job listings</p>
+            </div>
+            <button class="btn btn-primary" onclick="openJobModal()"><i class="fas fa-plus"></i> New Job Posting</button>
+        </div>
+        <div class="table-responsive">
+        <table class="data-table">
+            <thead><tr><th>Title</th><th>Department</th><th>Location</th><th>Type</th><th>Experience</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+            <tbody>
+                ${jobs.length === 0 ? '<tr><td colspan="8" style="text-align:center;padding:40px;color:#94a3b8">No job postings yet</td></tr>' : jobs.map(j => `
+                    <tr>
+                        <td><strong>${esc(j.title)}</strong></td>
+                        <td>${esc(j.department)}</td>
+                        <td>${esc(j.location)}</td>
+                        <td><span class="badge">${esc(j.type)}</span></td>
+                        <td>${j.experience_min || 0}-${j.experience_max || 0} yrs</td>
+                        <td>${j.is_active ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-danger">Inactive</span>'}</td>
+                        <td>${j.created_at ? new Date(j.created_at).toLocaleDateString() : '-'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline" onclick="openJobModal(${j.id})" title="Edit"><i class="fas fa-pen"></i></button>
+                            <button class="btn btn-sm ${j.is_active ? 'btn-warning' : 'btn-success'}" onclick="toggleJobActive(${j.id}, ${j.is_active ? 0 : 1})" title="${j.is_active ? 'Deactivate' : 'Activate'}">
+                                <i class="fas ${j.is_active ? 'fa-eye-slash' : 'fa-eye'}"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteJob(${j.id})" title="Delete"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+        </div>
+    `;
+}
+
+window._jobCache = null;
+async function openJobModal(id) {
+    let job = null;
+    if (id) {
+        const jobs = await api('/api/admin/job-postings');
+        job = jobs.find(j => j.id === id);
+    }
+    window._jobCache = job;
+    const m = document.getElementById('modal');
+    m.innerHTML = `
+        <div class="modal-overlay active" onclick="this.parentElement.innerHTML=''">
+            <div class="modal-content" style="max-width:700px" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                    <h3>${job ? 'Edit' : 'New'} Job Posting</h3>
+                    <button class="modal-close" onclick="document.getElementById('modal').innerHTML=''">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+                        <div class="form-group">
+                            <label>Job Title *</label>
+                            <input id="jp-title" class="form-input" value="${esc(job?.title || '')}" placeholder="e.g. Senior Java Developer">
+                        </div>
+                        <div class="form-group">
+                            <label>Department *</label>
+                            <select id="jp-dept" class="form-input">
+                                <option value="">Select Department</option>
+                                ${['SAP', 'VLSI', 'Embedded Systems', 'Full Stack', 'Cloud & DevOps', 'AI / ML', 'QA / Testing', 'Data Engineering', 'Cyber Security', 'Mobile Development', 'HR', 'Finance', 'Operations'].map(d => `<option value="${d}" ${job?.department === d ? 'selected' : ''}>${d}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Location</label>
+                            <input id="jp-location" class="form-input" value="${esc(job?.location || 'Hyderabad')}">
+                        </div>
+                        <div class="form-group">
+                            <label>Employment Type</label>
+                            <select id="jp-type" class="form-input">
+                                ${['full-time', 'part-time', 'contract', 'internship'].map(t => `<option value="${t}" ${job?.type === t ? 'selected' : ''}>${t.replace('-', ' ').replace(/\b\w/g, c => c.toUpperCase())}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Min Experience (yrs)</label>
+                            <input id="jp-exp-min" type="number" class="form-input" min="0" value="${job?.experience_min || 0}">
+                        </div>
+                        <div class="form-group">
+                            <label>Max Experience (yrs)</label>
+                            <input id="jp-exp-max" type="number" class="form-input" min="0" value="${job?.experience_max || 0}">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top:16px">
+                        <label>Job Description</label>
+                        <textarea id="jp-desc" class="form-input" rows="4" placeholder="Describe the role, responsibilities...">${esc(job?.description || '')}</textarea>
+                    </div>
+                    <div class="form-group" style="margin-top:12px">
+                        <label>Requirements (one per line)</label>
+                        <textarea id="jp-reqs" class="form-input" rows="4" placeholder="B.Tech/M.Tech in CS or related field\n3+ years experience in Java...">${esc(job?.requirements || '')}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="document.getElementById('modal').innerHTML=''">Cancel</button>
+                    <button class="btn btn-primary" onclick="saveJobPosting(${id || 'null'})">${job ? 'Update' : 'Create'} Posting</button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+async function saveJobPosting(id) {
+    const data = {
+        title: document.getElementById('jp-title').value.trim(),
+        department: document.getElementById('jp-dept').value,
+        location: document.getElementById('jp-location').value.trim(),
+        type: document.getElementById('jp-type').value,
+        experience_min: parseInt(document.getElementById('jp-exp-min').value) || 0,
+        experience_max: parseInt(document.getElementById('jp-exp-max').value) || 0,
+        description: document.getElementById('jp-desc').value.trim(),
+        requirements: document.getElementById('jp-reqs').value.trim(),
+    };
+    if (!data.title || !data.department) return showToast('Title and Department are required', 'error');
+    if (id) {
+        data.is_active = window._jobCache?.is_active !== undefined ? window._jobCache.is_active : 1;
+        await api(`/api/admin/job-postings/${id}`, 'PUT', data);
+        showToast('Job posting updated', 'success');
+    } else {
+        await api('/api/admin/job-postings', 'POST', data);
+        showToast('Job posting created', 'success');
+    }
+    document.getElementById('modal').innerHTML = '';
+    navigate('job-postings');
+}
+
+async function toggleJobActive(id, active) {
+    const jobs = await api('/api/admin/job-postings');
+    const job = jobs.find(j => j.id === id);
+    if (!job) return;
+    await api(`/api/admin/job-postings/${id}`, 'PUT', { ...job, is_active: active });
+    showToast(active ? 'Job posting activated' : 'Job posting deactivated', 'success');
+    navigate('job-postings');
+}
+
+async function deleteJob(id) {
+    if (!confirm('Are you sure you want to permanently delete this job posting?')) return;
+    await api(`/api/admin/job-postings/${id}`, 'DELETE');
+    showToast('Job posting deleted', 'success');
+    navigate('job-postings');
+}
+
+// ===================================================================
+//  PAGE: APPLICATIONS (HR/Admin)
+// ===================================================================
+async function pageApplications() {
+    pageTitle.textContent = 'Job Applications';
+    const apps = await api('/api/admin/applications');
+    content.innerHTML = `
+        <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+            <div>
+                <h2 style="margin:0">Job Applications</h2>
+                <p style="color:#94a3b8;margin:4px 0 0">${apps.length} total application${apps.length !== 1 ? 's' : ''}</p>
+            </div>
+        </div>
+        <div class="table-responsive">
+        <table class="data-table">
+            <thead><tr><th>Applicant</th><th>Position</th><th>Department</th><th>Experience</th><th>Email</th><th>Phone</th><th>Status</th><th>Applied</th><th>Resume</th><th>Actions</th></tr></thead>
+            <tbody>
+                ${apps.length === 0 ? '<tr><td colspan="10" style="text-align:center;padding:40px;color:#94a3b8">No applications received yet</td></tr>' : apps.map(a => `
+                    <tr>
+                        <td><strong>${esc(a.first_name)} ${esc(a.last_name)}</strong></td>
+                        <td>${esc(a.job_title)}</td>
+                        <td>${esc(a.job_department)}</td>
+                        <td>${a.experience_type === 'fresher' ? 'Fresher' : (a.experience_years || 0) + ' yrs'}</td>
+                        <td><a href="mailto:${esc(a.email)}">${esc(a.email)}</a></td>
+                        <td>${esc(a.phone || '-')}</td>
+                        <td>${appStatusBadge(a.status)}</td>
+                        <td>${a.created_at ? new Date(a.created_at).toLocaleDateString() : '-'}</td>
+                        <td>${a.resume_file ? `<a href="/${esc(a.resume_file)}" target="_blank" class="btn btn-sm btn-outline"><i class="fas fa-download"></i></a>` : '-'}</td>
+                        <td>
+                            <select class="form-input" style="width:130px;padding:4px 8px;font-size:12px" onchange="updateAppStatus(${a.id}, this.value)">
+                                ${['received', 'shortlisted', 'interview', 'offered', 'rejected', 'withdrawn'].map(s => `<option value="${s}" ${a.status === s ? 'selected' : ''}>${s.charAt(0).toUpperCase() + s.slice(1)}</option>`).join('')}
+                            </select>
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+        </div>
+    `;
+}
+
+function appStatusBadge(status) {
+    const colors = { received: '#3b82f6', shortlisted: '#f59e0b', interview: '#8b5cf6', offered: '#10b981', rejected: '#ef4444', withdrawn: '#6b7280' };
+    return `<span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;background:${colors[status] || '#6b7280'}22;color:${colors[status] || '#6b7280'}">${status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Received'}</span>`;
+}
+
+async function updateAppStatus(id, status) {
+    await api(`/api/admin/applications/${id}/status`, 'PUT', { status });
+    showToast('Application status updated', 'success');
+}
 
 // ===== XSS PROTECTION =====
 function esc(str) {
