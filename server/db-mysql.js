@@ -668,6 +668,21 @@ async function initDatabase() {
             console.log('✅ Default admin created: admin@primeaxisit.com / admin@123');
         }
 
+        // ===== SEED TEST USERS (HR, Manager, Accountant) =====
+        const testUsers = [
+            { email: 'hr@primeaxisit.com', password: 'Hr@12345', role: 'hr', name: 'HR Manager' },
+            { email: 'manager@primeaxisit.com', password: 'Manager@123', role: 'manager', name: 'Project Manager' },
+            { email: 'accounts@primeaxisit.com', password: 'Accounts@123', role: 'accountant', name: 'Accounts Officer' },
+        ];
+        for (const tu of testUsers) {
+            const [existing] = await conn.query('SELECT id FROM users WHERE email = ?', [tu.email]);
+            if (existing.length === 0) {
+                const h = bcrypt.hashSync(tu.password, 10);
+                await conn.query('INSERT INTO users (email, password, role, name, must_change_password) VALUES (?, ?, ?, ?, 0)', [tu.email, h, tu.role, tu.name]);
+                console.log(`✅ Test user created: ${tu.email} / ${tu.password}`);
+            }
+        }
+
         // ===== SEED COMPANY HOLIDAYS 2026 =====
         const [holidayRows] = await conn.query('SELECT COUNT(*) as c FROM company_holidays WHERE year = 2026');
         if (holidayRows[0].c === 0) {
