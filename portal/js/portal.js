@@ -514,7 +514,7 @@ async function pageUsers() {
                         <td id="sync-cell-${u.id}">${u.email.endsWith('@primeaxisit.com') ?
                             (u.hostinger_synced ?
                                 `<span class="badge-status active" style="cursor:pointer" onclick="toggleHostingerSync(${u.id},false)" title="Click to mark unsynced"><i class="fas fa-check-circle"></i> Synced</span>` :
-                                `<span class="badge-status inactive" style="cursor:pointer" onclick="verifyEmail(${u.id})" title="Click to verify"><i class="fas fa-times-circle"></i> Not Synced</span>`)
+                                `<span class="badge-status inactive" style="cursor:pointer" onclick="toggleHostingerSync(${u.id},true)" title="Click to mark synced"><i class="fas fa-times-circle"></i> Not Synced</span>`)
                             : '<span style="color:#64748b;font-size:12px">N/A</span>'}</td>
                         <td>${u.is_active ? '<span class="badge-status active">Active</span>' : '<span class="badge-status inactive">Inactive</span>'}</td>
                         <td>
