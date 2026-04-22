@@ -861,6 +861,7 @@ window.createOffer = async () => {
             headers: { 'Authorization': 'Bearer ' + token },
             body: formData
         });
+        if (resp.status === 401) { localStorage.clear(); window.location.href = '/portal/login.html'; return; }
         const data = await resp.json();
         if (!resp.ok) throw new Error(data.error || 'Failed to create offer');
         toast('Offer letter created');
