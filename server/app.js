@@ -236,7 +236,7 @@ app.put('/api/users/:id/hostinger-sync', auth, requireRole('admin'), async (req,
     res.json({ message: synced ? 'Marked as synced with Hostinger' : 'Marked as unsynced' });
 });
 
-// Verify email exists on Hostinger by sending a test via authenticated SMTP
+// Verify email exists on Hostinger by sending via authenticated SMTP
 app.post('/api/users/:id/verify-email', auth, requireRole('admin'), async (req, res) => {
     const user = await db.prepare('SELECT id, email FROM users WHERE id = ?').get(req.params.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
@@ -244,7 +244,7 @@ app.post('/api/users/:id/verify-email', auth, requireRole('admin'), async (req, 
     const email = user.email;
     const domain = email.split('@')[1];
     if (domain !== 'primeaxisit.com') {
-        return res.json({ verified: false, message: 'Not a @primeaxisit.com email - skipping verification' });
+        return res.json({ verified: false, message: 'Not a @primeaxisit.com email - skipping' });
     }
 
     try {
@@ -273,18 +273,18 @@ app.post('/api/users/:id/verify-email', auth, requireRole('admin'), async (req, 
         });
 
         await db.prepare('UPDATE users SET hostinger_synced = 1 WHERE id = ?').run(user.id);
-        res.json({ verified: true, message: 'Email verified - verification email sent and marked as synced' });
+        res.json({ verified: true, message: 'Email verified and synced successfully' });
     } catch (err) {
-        const msg = err.message || '';
-        if (msg.includes('Mailbox not found') || msg.includes('recipient') || msg.includes('550') || msg.includes('553')) {
-            res.json({ verified: false, message: 'Mailbox does NOT exist on Hostinger. Create it first, then verify again.' });
-        } else if (!(process.env.SMTP_PASS || '').length) {
-            res.json({ verified: false, message: 'SMTP not configured on server. Use manual sync instead.' });
+        const msg = (err.message || '').toLowerCase();
+        if (msg.includes('mailbox') || msg.includes('recipient') || msg.includes('550') || msg.includes('553') || msg.includes('user unknown')) {
+            res.json({ verified: false, message: 'Mailbox does NOT exist on Hostinger. Create it first.' });
         } else {
-            res.json({ verified: false, message: 'Verification failed: ' + msg.substring(0, 100) + '. You can manually mark as synced.' });
+            console.error('Email verify error:', err.message);
+            res.json({ verified: false, message: 'Verification error: ' + (err.message || '').substring(0, 120) });
         }
     }
 });
+
 
 
 // ============================================================
