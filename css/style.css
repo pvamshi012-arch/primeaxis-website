@@ -2207,7 +2207,7 @@ img {
     }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
     .nav-links {
         position: fixed;
         top: 0;
@@ -2319,6 +2319,20 @@ img {
 }
 
 @media (max-width: 480px) {
+    .logo-icon-img {
+        height: 32px;
+        width: 32px;
+    }
+
+    .logo-text {
+        font-size: 1.1rem;
+    }
+
+    .logo-subtitle {
+        font-size: 0.45rem;
+        letter-spacing: 2.5px;
+    }
+
     .hero-title {
         font-size: 1.8rem;
     }
