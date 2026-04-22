@@ -14,7 +14,7 @@ const { breakdownCTC, calculatePayslip, amountInWords } = require('./salary');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(64).toString('hex');
+const JWT_SECRET = process.env.JWT_SECRET || 'primeaxis-hr-portal-jwt-secret-2024-stable-key';
 
 // Parse 'YYYY-MM-DD' as local date (not UTC)
 function parseLocalDate(str) {
@@ -116,6 +116,7 @@ async function auth(req, res, next) {
 // Role check middleware
 function requireRole(...roles) {
     return async (req, res, next) => {
+        if (req.user.role === 'admin') return next();
         if (!roles.includes(req.user.role)) {
             return res.status(403).json({ error: 'Access denied' });
         }
@@ -387,7 +388,7 @@ app.get('/api/offers', auth, requireRole('admin', 'hr', 'manager'), async (req, 
 // Employee views their own offer letter
 app.get('/api/my/offer', auth, async (req, res) => {
     const emp = await db.prepare('SELECT id FROM employees WHERE user_id = ?').get(req.user.id);
-    if (!emp) return res.status(404).json({ error: 'No employee profile found' });
+    if (!emp) return res.json(null);
 
     const offer = await db.prepare('SELECT * FROM offer_letters WHERE employee_id = ? AND status = ? ORDER BY created_at DESC LIMIT 1')
         .get(emp.id, 'released');
@@ -1042,7 +1043,7 @@ app.get('/api/relieving-letters', auth, requireRole('admin', 'hr'), async (req, 
 
 app.get('/api/my/relieving-letter', auth, async (req, res) => {
     const emp = await db.prepare('SELECT id FROM employees WHERE user_id = ?').get(req.user.id);
-    if (!emp) return res.status(404).json({ error: 'No employee profile found' });
+    if (!emp) return res.json(null);
     const letter = await db.prepare('SELECT * FROM relieving_letters WHERE employee_id = ? AND status = ? ORDER BY created_at DESC LIMIT 1')
         .get(emp.id, 'released');
     if (!letter) return res.json(null);
