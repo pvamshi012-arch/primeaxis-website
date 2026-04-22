@@ -2054,7 +2054,7 @@ app.post('/api/bgv/login', loginLimiter, async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
 
-    const invite = await db.prepare('SELECT * FROM bgv_invites WHERE candidate_email = ? AND status IN (?, ?)').get(email, 'pending', 'in_progress');
+    const invite = await db.prepare('SELECT * FROM bgv_invites WHERE candidate_email = ? AND status IN (?, ?) ORDER BY id DESC').get(email, 'pending', 'in_progress');
     if (!invite) return res.status(401).json({ error: 'Invalid credentials or BGV form already submitted' });
 
     if (!bcrypt.compareSync(password, invite.temp_password)) {
