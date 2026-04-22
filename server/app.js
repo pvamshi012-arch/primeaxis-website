@@ -181,6 +181,114 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
     });
 });
 
+// ============================================================
+//  FORGOT PASSWORD FLOW
+// ============================================================
+
+// Step 1: Send reset code to user's email
+app.post('/api/auth/forgot-password', loginLimiter, async (req, res) => {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email address is required' });
+
+    const user = await db.prepare('SELECT * FROM users WHERE email = ? AND is_active = 1').get(email.toLowerCase().trim());
+    if (!user) return res.status(404).json({ error: 'No active account found with this email address' });
+
+    // Generate 6-digit code
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
+
+    // Invalidate old codes
+    await db.prepare('UPDATE password_reset_codes SET used = 1 WHERE user_id = ? AND used = 0').run(user.id);
+
+    // Determine which email to send to:
+    // - For candidates (role=candidate): send to their personal email (= users.email)
+    // - For employees: send to their employee email (could be different from users.email)
+    //   But in practice, users.email IS their email, so send there.
+    //   If they have an employee record with a different personal email, use that too.
+    let sendToEmail = user.email;
+
+    // Store the code
+    await db.prepare('INSERT INTO password_reset_codes (user_id, code, email_sent_to, expires_at) VALUES (?, ?, ?, ?)')
+        .run(user.id, code, sendToEmail, expiresAt);
+
+    // Send email with code
+    try {
+        await sendEmail(sendToEmail, 'Password Reset Code - PrimeAxis IT',
+            `<div style="font-family:Segoe UI,Arial,sans-serif;max-width:500px;margin:0 auto;background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
+                <div style="background:linear-gradient(135deg,#001233,#0077b6);padding:20px 28px;text-align:center">
+                    <h2 style="color:#fff;margin:0;font-size:18px">Password Reset</h2>
+                </div>
+                <div style="padding:28px">
+                    <p style="color:#475569;font-size:15px">Hi ${user.name},</p>
+                    <p style="color:#475569;font-size:14px;line-height:1.7">You requested a password reset. Use the code below to verify your identity:</p>
+                    <div style="background:#f0f9ff;border:2px solid #0077b6;border-radius:12px;padding:20px;margin:20px 0;text-align:center">
+                        <p style="color:#64748b;font-size:13px;margin:0 0 8px;letter-spacing:1px">YOUR RESET CODE</p>
+                        <p style="color:#001233;font-size:36px;font-weight:800;margin:0;letter-spacing:8px;font-family:monospace">${code}</p>
+                    </div>
+                    <p style="color:#ef4444;font-size:13px;font-weight:600;text-align:center">&#9888; This code expires in 5 minutes</p>
+                    <p style="color:#94a3b8;font-size:12px;margin-top:20px;line-height:1.6">If you did not request this, please ignore this email. Your password will remain unchanged.</p>
+                </div>
+            </div>`);
+        console.log(`Reset code sent to ${sendToEmail} for user ${user.email}`);
+    } catch (e) {
+        console.error('Failed to send reset code email:', e.message);
+        return res.status(500).json({ error: 'Failed to send email. Please try again.' });
+    }
+
+    // Mask the email for privacy
+    const parts = sendToEmail.split('@');
+    const masked = parts[0].substring(0, 2) + '***@' + parts[1];
+    res.json({ message: `Reset code sent to ${masked}`, email: masked });
+});
+
+// Step 2: Verify the code
+app.post('/api/auth/verify-reset-code', loginLimiter, async (req, res) => {
+    const { email, code } = req.body;
+    if (!email || !code) return res.status(400).json({ error: 'Email and code are required' });
+
+    const user = await db.prepare('SELECT id FROM users WHERE email = ? AND is_active = 1').get(email.toLowerCase().trim());
+    if (!user) return res.status(404).json({ error: 'Account not found' });
+
+    const resetCode = await db.prepare(
+        'SELECT * FROM password_reset_codes WHERE user_id = ? AND code = ? AND used = 0 ORDER BY id DESC'
+    ).get(user.id, code.trim());
+
+    if (!resetCode) return res.status(400).json({ error: 'Invalid code. Please check and try again.' });
+
+    const now = new Date();
+    const expires = new Date(resetCode.expires_at);
+    if (now > expires) {
+        await db.prepare('UPDATE password_reset_codes SET used = 1 WHERE id = ?').run(resetCode.id);
+        return res.status(400).json({ error: 'Code has expired. Please request a new one.' });
+    }
+
+    // Generate a short-lived token for the password reset step
+    const resetToken = jwt.sign({ id: user.id, resetCodeId: resetCode.id }, JWT_SECRET, { expiresIn: '10m' });
+    res.json({ message: 'Code verified', resetToken });
+});
+
+// Step 3: Set new password
+app.post('/api/auth/reset-password', async (req, res) => {
+    const { resetToken, newPassword } = req.body;
+    if (!resetToken || !newPassword) return res.status(400).json({ error: 'Token and new password required' });
+    if (newPassword.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
+
+    try {
+        const decoded = jwt.verify(resetToken, JWT_SECRET);
+        const resetCode = await db.prepare('SELECT * FROM password_reset_codes WHERE id = ? AND used = 0').get(decoded.resetCodeId);
+        if (!resetCode) return res.status(400).json({ error: 'Reset code already used or expired' });
+
+        const hash = bcrypt.hashSync(newPassword, 10);
+        await db.prepare('UPDATE users SET password = ?, must_change_password = 0, temp_password_expires = NULL, updated_at = datetime("now") WHERE id = ?')
+            .run(hash, decoded.id);
+        await db.prepare('UPDATE password_reset_codes SET used = 1 WHERE id = ?').run(resetCode.id);
+
+        res.json({ message: 'Password reset successfully. You can now login.' });
+    } catch {
+        return res.status(400).json({ error: 'Invalid or expired reset token. Please start over.' });
+    }
+});
+
 // Set new password (forced change after temp password login)
 app.post('/api/auth/set-password', async (req, res) => {
     const { token: authToken, newPassword } = req.body;

@@ -660,6 +660,20 @@ async function initDatabase() {
             console.log('✅ Job postings seeded');
         }
 
+        // Password reset codes table
+        await conn.query(`
+            CREATE TABLE IF NOT EXISTS password_reset_codes (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                code VARCHAR(6) NOT NULL,
+                email_sent_to VARCHAR(255) NOT NULL,
+                expires_at DATETIME NOT NULL,
+                used TINYINT DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            )
+        `);
+
         // Migration: Add new columns if missing
         try { await conn.query("ALTER TABLE offer_letters ADD COLUMN candidate_signature LONGTEXT"); } catch(e) {}
         try { await conn.query("ALTER TABLE offer_letters ADD COLUMN accepted_at DATETIME"); } catch(e) {}

@@ -190,6 +190,7 @@
                     <i class="fas fa-arrow-right" id="arrowIcon"></i>
                 </button>
             </form>
+            <a href="#" class="back-link" id="forgotLink" onclick="showForgotPassword()" style="color:#4f6ef7;margin-top:12px"><i class="fas fa-key"></i> Forgot Password?</a>
             <a href="/" class="back-link"><i class="fas fa-arrow-left"></i> Back to Website</a>
         </div>
     </div>
@@ -303,6 +304,254 @@
             }
         }
         window.setNewPassword = setNewPassword;
+
+        // ===== FORGOT PASSWORD FLOW =====
+        let _resetEmail = '';
+
+        function showForgotPassword() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('forgotLink').style.display = 'none';
+            document.querySelector('.login-header h1').textContent = 'Forgot Password';
+            document.querySelector('.login-header p').textContent = 'Enter your email to receive a reset code';
+            errorDiv.classList.remove('show');
+
+            const div = document.createElement('div');
+            div.id = 'forgotStep1';
+            div.innerHTML = `
+                <div class="form-group">
+                    <label for="resetEmail">Email Address</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="resetEmail" placeholder="your@email.com" required>
+                    </div>
+                </div>
+                <button type="button" class="btn-login" id="sendCodeBtn" onclick="sendResetCode()">
+                    <span>Send Reset Code</span>
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+                <a href="#" class="back-link" onclick="location.reload()" style="margin-top:12px"><i class="fas fa-arrow-left"></i> Back to Login</a>
+            `;
+            const card = document.querySelector('.login-card');
+            const backLink = card.querySelector('.back-link:last-child');
+            card.insertBefore(div, backLink);
+        }
+
+        async function sendResetCode() {
+            const email = document.getElementById('resetEmail').value.trim();
+            if (!email) { showError('Please enter your email address'); return; }
+
+            const btn = document.getElementById('sendCodeBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span>Sending...</span><div class="spinner" style="display:block"></div>';
+            errorDiv.classList.remove('show');
+
+            try {
+                const res = await fetch('/api/auth/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+
+                _resetEmail = email;
+                showCodeStep(data.email);
+            } catch (err) {
+                showError(err.message);
+                btn.disabled = false;
+                btn.innerHTML = '<span>Send Reset Code</span><i class="fas fa-paper-plane"></i>';
+            }
+        }
+
+        function showCodeStep(maskedEmail) {
+            const step1 = document.getElementById('forgotStep1');
+            if (step1) step1.remove();
+            const exist = document.getElementById('forgotStep2');
+            if (exist) exist.remove();
+
+            document.querySelector('.login-header h1').textContent = 'Enter Reset Code';
+            document.querySelector('.login-header p').textContent = 'Code sent to ' + maskedEmail;
+
+            const div = document.createElement('div');
+            div.id = 'forgotStep2';
+            div.innerHTML = `
+                <div class="form-group">
+                    <label for="resetCode">6-Digit Code</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-shield-halved"></i>
+                        <input type="text" id="resetCode" placeholder="Enter 6-digit code" maxlength="6" pattern="[0-9]{6}" style="letter-spacing:6px;font-size:1.2rem;text-align:center;font-weight:700" required>
+                    </div>
+                </div>
+                <button type="button" class="btn-login" id="verifyCodeBtn" onclick="verifyResetCode()">
+                    <span>Verify Code</span>
+                    <i class="fas fa-check-circle"></i>
+                </button>
+                <div style="display:flex;justify-content:space-between;margin-top:12px">
+                    <a href="#" class="back-link" onclick="location.reload()" style="margin:0;font-size:0.8rem"><i class="fas fa-arrow-left"></i> Back to Login</a>
+                    <a href="#" class="back-link" id="resendLink" onclick="resendCode()" style="margin:0;color:#4f6ef7;font-size:0.8rem"><i class="fas fa-redo"></i> Resend Code</a>
+                </div>
+                <p id="timerText" style="text-align:center;color:rgba(255,255,255,0.4);font-size:0.8rem;margin-top:8px">Code expires in <span id="countdown">5:00</span></p>
+            `;
+            const card = document.querySelector('.login-card');
+            const backLink = card.querySelector('.back-link:last-child');
+            card.insertBefore(div, backLink);
+            document.getElementById('resetCode').focus();
+            startCountdown();
+        }
+
+        let countdownTimer;
+        function startCountdown() {
+            if (countdownTimer) clearInterval(countdownTimer);
+            let seconds = 300;
+            const el = document.getElementById('countdown');
+            if (!el) return;
+            countdownTimer = setInterval(() => {
+                seconds--;
+                if (seconds <= 0) {
+                    clearInterval(countdownTimer);
+                    el.textContent = 'Expired';
+                    el.style.color = '#ef4444';
+                    return;
+                }
+                el.textContent = Math.floor(seconds/60) + ':' + String(seconds%60).padStart(2,'0');
+            }, 1000);
+        }
+
+        async function resendCode() {
+            const link = document.getElementById('resendLink');
+            link.style.pointerEvents = 'none';
+            link.style.opacity = '0.5';
+            link.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            errorDiv.classList.remove('show');
+
+            try {
+                const res = await fetch('/api/auth/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: _resetEmail })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+                link.innerHTML = '<i class="fas fa-check"></i> Code Resent!';
+                link.style.color = '#10b981';
+                startCountdown();
+                setTimeout(() => { link.innerHTML = '<i class="fas fa-redo"></i> Resend Code'; link.style.color = '#4f6ef7'; link.style.pointerEvents = 'auto'; link.style.opacity = '1'; }, 3000);
+            } catch (err) {
+                showError(err.message);
+                link.innerHTML = '<i class="fas fa-redo"></i> Resend Code';
+                link.style.pointerEvents = 'auto';
+                link.style.opacity = '1';
+            }
+        }
+
+        async function verifyResetCode() {
+            const code = document.getElementById('resetCode').value.trim();
+            if (!code || code.length !== 6) { showError('Please enter the 6-digit code'); return; }
+
+            const btn = document.getElementById('verifyCodeBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span>Verifying...</span><div class="spinner" style="display:block"></div>';
+            errorDiv.classList.remove('show');
+
+            try {
+                const res = await fetch('/api/auth/verify-reset-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: _resetEmail, code })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+
+                if (countdownTimer) clearInterval(countdownTimer);
+                showNewPasswordStep(data.resetToken);
+            } catch (err) {
+                showError(err.message);
+                btn.disabled = false;
+                btn.innerHTML = '<span>Verify Code</span><i class="fas fa-check-circle"></i>';
+            }
+        }
+
+        function showNewPasswordStep(resetToken) {
+            const step2 = document.getElementById('forgotStep2');
+            if (step2) step2.remove();
+
+            document.querySelector('.login-header h1').textContent = 'Set New Password';
+            document.querySelector('.login-header p').textContent = 'Code verified! Enter your new password';
+
+            const div = document.createElement('div');
+            div.id = 'forgotStep3';
+            div.innerHTML = `
+                <div class="form-group">
+                    <label for="newPwd">New Password</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="newPwd" placeholder="Enter new password (min 6 chars)" required minlength="6">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPwd">Confirm Password</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="confirmPwd" placeholder="Confirm new password" required>
+                    </div>
+                </div>
+                <button type="button" class="btn-login" id="resetPwdBtn" onclick="resetPassword()">
+                    <span>Reset Password</span>
+                    <i class="fas fa-check"></i>
+                </button>
+            `;
+            const card = document.querySelector('.login-card');
+            const backLink = card.querySelector('.back-link:last-child');
+            card.insertBefore(div, backLink);
+            window._resetToken = resetToken;
+        }
+
+        async function resetPassword() {
+            const np = document.getElementById('newPwd').value;
+            const cp = document.getElementById('confirmPwd').value;
+            if (np.length < 6) { showError('Password must be at least 6 characters'); return; }
+            if (np !== cp) { showError('Passwords do not match'); return; }
+            errorDiv.classList.remove('show');
+
+            const btn = document.getElementById('resetPwdBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span>Resetting...</span><div class="spinner" style="display:block"></div>';
+
+            try {
+                const res = await fetch('/api/auth/reset-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ resetToken: window._resetToken, newPassword: np })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+
+                // Show success and redirect to login
+                document.getElementById('forgotStep3').innerHTML = `
+                    <div style="text-align:center;padding:20px 0">
+                        <i class="fas fa-check-circle" style="font-size:48px;color:#10b981;margin-bottom:16px;display:block"></i>
+                        <h3 style="color:#fff;margin:0 0 8px">Password Reset Successful!</h3>
+                        <p style="color:rgba(255,255,255,0.5);font-size:14px">Redirecting to login...</p>
+                    </div>
+                `;
+                setTimeout(() => location.reload(), 2000);
+            } catch (err) {
+                showError(err.message);
+                btn.disabled = false;
+                btn.innerHTML = '<span>Reset Password</span><i class="fas fa-check"></i>';
+            }
+        }
+
+        function showError(msg) {
+            errorText.textContent = msg;
+            errorDiv.classList.add('show');
+        }
+
+        window.showForgotPassword = showForgotPassword;
+        window.sendResetCode = sendResetCode;
+        window.verifyResetCode = verifyResetCode;
+        window.resendCode = resendCode;
+        window.resetPassword = resetPassword;
     </script>
 </body>
 </html>
