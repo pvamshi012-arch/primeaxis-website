@@ -230,7 +230,7 @@ const navConfig = {
             { id: 'my-tickets', icon: 'fa-ticket', label: 'Raise Ticket' },
         ]}
     ],
-    manager: [
+    vp: [
         { section: 'Main', items: [
             { id: 'dashboard', icon: 'fa-gauge-high', label: 'Dashboard' },
             { id: 'feed', icon: 'fa-comments', label: 'Feed / Chat' },
@@ -400,7 +400,7 @@ async function pageDashboard() {
         html += statCard('fa-calendar-xmark', 'gold', stats.pendingLeaves, 'Pending Leaves');
         if (stats.openTickets !== undefined) html += statCard('fa-ticket', 'pink', stats.openTickets, 'Open Tickets');
     }
-    if (['admin', 'manager'].includes(u.role)) {
+    if (['admin', 'vp'].includes(u.role)) {
         html += statCard('fa-clock', 'cyan', stats.pendingTimesheets, 'Pending Timesheets');
         html += statCard('fa-calendar-check', 'gold', stats.pendingLeaveApprovals, 'Leave Approvals');
         if (stats.pendingOfferApprovals !== undefined) html += statCard('fa-file-signature', 'purple', stats.pendingOfferApprovals, 'Offer Approvals');
@@ -438,7 +438,7 @@ async function pageDashboard() {
 
     // Anniversaries and training widgets
     try {
-        if (['admin', 'hr', 'manager'].includes(u.role)) {
+        if (['admin', 'hr', 'vp'].includes(u.role)) {
             const anniversaries = await apiGet('/anniversaries');
             if (anniversaries.length > 0) {
                 html += `<div class="table-card" style="margin-top:20px;padding:16px">
@@ -529,7 +529,7 @@ window.showCreateUserModal = () => {
                 </div>
             </div>
             <div class="form-group"><label>Role</label><select class="form-control" id="mu_role">
-                <option value="employee">Employee</option><option value="hr">HR</option><option value="manager">Manager</option><option value="accountant">Accountant</option>
+                <option value="employee">Employee</option><option value="hr">HR</option><option value="vp">VP</option><option value="accountant">Accountant</option>
             </select></div>
             <div class="form-group">
                 <label>Temporary Password</label>
@@ -697,7 +697,8 @@ async function pageOffers() {
                         <td>
                             <button class="btn btn-sm btn-secondary" onclick="viewOffer(${o.id})"><i class="fas fa-eye"></i></button>
                             ${o.status === 'draft' && canCreate ? `<button class="btn btn-sm btn-primary" onclick="submitOffer(${o.id})"><i class="fas fa-paper-plane"></i></button>` : ''}
-                            ${o.status === 'pending_approval' && ['admin','manager'].includes(u.role) ? `<button class="btn btn-sm btn-success" onclick="approveOffer(${o.id})"><i class="fas fa-check"></i></button><button class="btn btn-sm btn-danger" onclick="rejectOffer(${o.id})"><i class="fas fa-times"></i></button>` : ''}
+                            ${o.status === 'pending_vp' && ['admin','vp'].includes(u.role) ? `<button class="btn btn-sm btn-success" onclick="vpApproveOffer(${o.id})" title="VP Approve"><i class="fas fa-check"></i> VP</button><button class="btn btn-sm btn-danger" onclick="rejectOffer(${o.id})"><i class="fas fa-times"></i></button>` : ''}
+                            ${o.status === 'pending_ceo' && u.role === 'admin' ? `<button class="btn btn-sm btn-success" onclick="ceoApproveOffer(${o.id})" title="CEO Approve"><i class="fas fa-check-double"></i> CEO</button><button class="btn btn-sm btn-danger" onclick="rejectOffer(${o.id})"><i class="fas fa-times"></i></button>` : ''}
                             ${o.status === 'approved' && canCreate ? `<button class="btn btn-sm btn-primary" onclick="releaseOffer(${o.id})"><i class="fas fa-share"></i> Release</button>` : ''}
                             ${o.status === 'released' && canCreate ? `<button class="btn btn-sm btn-success" onclick="showBGVInviteModal(${o.id}, '${esc(o.employee_name)}', '${esc(o.employee_email || '')}')"><i class="fas fa-user-shield"></i> BGV</button>` : ''}
                         </td>
@@ -874,8 +875,9 @@ window.createOffer = async () => {
     } catch (e) { toast(e.message, 'error'); }
 };
 
-window.submitOffer = async (id) => { try { await apiPut(`/offers/${id}/submit`); toast('Submitted for manager approval'); pageOffers(); } catch (e) { toast(e.message, 'error'); } };
-window.approveOffer = async (id) => { try { await apiPut(`/offers/${id}/approve`); toast('Offer approved'); pageOffers(); } catch (e) { toast(e.message, 'error'); } };
+window.submitOffer = async (id) => { try { await apiPut(`/offers/${id}/submit`); toast('Submitted for VP approval'); pageOffers(); } catch (e) { toast(e.message, 'error'); } };
+window.vpApproveOffer = async (id) => { try { await apiPut(`/offers/${id}/vp-approve`); toast('VP approved. Sent to CEO.'); pageOffers(); } catch (e) { toast(e.message, 'error'); } };
+window.ceoApproveOffer = async (id) => { try { await apiPut(`/offers/${id}/ceo-approve`); toast('CEO approved. HR can release.'); pageOffers(); } catch (e) { toast(e.message, 'error'); } };
 window.rejectOffer = async (id) => { try { await apiPut(`/offers/${id}/reject`); toast('Offer sent back to draft'); pageOffers(); } catch (e) { toast(e.message, 'error'); } };
 window.releaseOffer = async (id) => { try { await apiPut(`/offers/${id}/release`); toast('Offer letter released!'); pageOffers(); } catch (e) { toast(e.message, 'error'); } };
 
@@ -1110,7 +1112,7 @@ function renderOfferLetter(o) {
 async function pageTimesheets() {
     pageTitle.textContent = 'Timesheets';
     const ts = await apiGet('/timesheets');
-    const isMgr = ['admin', 'manager'].includes(u.role);
+    const isMgr = ['admin', 'vp'].includes(u.role);
 
     const parsedTs = ts.map(t => {
         let entries = [];
@@ -1210,7 +1212,7 @@ window.rejectTimesheet = async (id) => {
 async function pageLeaves() {
     pageTitle.textContent = 'Leave Management';
     const leaves = await apiGet('/leaves');
-    const isMgr = ['admin', 'manager'].includes(u.role);
+    const isMgr = ['admin', 'vp'].includes(u.role);
     content.innerHTML = `
         <div class="table-card">
             <div class="table-header">
@@ -2214,7 +2216,7 @@ function renderRelievingLetter(r) {
 }
 
 // ===================================================================
-//  PAGE: SUPPORT TICKETS (Admin/HR/Manager view)
+//  PAGE: SUPPORT TICKETS (Admin/HR/VP view)
 // ===================================================================
 const ticketCategories = ['IT Support','HR','Finance','Facilities','Admin','Access/Permissions','Other'];
 const ticketPriorities = ['low','medium','high','critical'];
@@ -2294,7 +2296,7 @@ window.filterTicketsTable = () => {
 
 window.openTicketDetail = async (id) => {
     const t = await apiGet(`/tickets/${id}`);
-    const isAdmin = ['admin', 'hr', 'manager'].includes(u.role);
+    const isAdmin = ['admin', 'hr', 'vp'].includes(u.role);
     const canAssign = ['admin', 'hr'].includes(u.role);
 
     let usersOptions = '';
@@ -2401,7 +2403,7 @@ window.updateTicketStatus = async (id) => {
     try {
         await apiPut(`/tickets/${id}/status`, { status: $('#tk_status').value, resolution: $('#tk_resolution')?.value });
         toast('Ticket updated'); closeModal();
-        if (['admin','hr','manager'].includes(u.role)) pageTickets(); else pageMyTickets();
+        if (['admin','hr','vp'].includes(u.role)) pageTickets(); else pageMyTickets();
     } catch (e) { toast(e.message, 'error'); }
 };
 
@@ -3247,12 +3249,12 @@ window.addFeedComment = async (postId) => {
 };
 
 // ===================================================================
-//  PAGE: RESIGNATIONS (Admin/HR/Manager)
+//  PAGE: RESIGNATIONS (Admin/HR/VP)
 // ===================================================================
 async function pageResignations() {
     pageTitle.textContent = 'Resignations';
     const resignations = await apiGet('/resignations');
-    const statusColors = { submitted: 'gold', manager_approved: 'blue', hr_approved: 'blue', finance_approved: 'blue', completed: 'green', withdrawn: 'red' };
+    const statusColors = { submitted: 'gold', vp_approved: 'blue', hr_approved: 'blue', finance_approved: 'blue', completed: 'green', withdrawn: 'red' };
     content.innerHTML = `
         <div class="stats-grid" style="margin-bottom:20px">
             ${statCard('fa-person-walking-arrow-right', 'blue', resignations.length, 'Total Resignations')}
@@ -3271,7 +3273,7 @@ async function pageResignations() {
                         <td>${r.notice_period_days}</td>
                         <td>${statusBadge(r.status)}</td>
                         <td>
-                            <span class="clearance-dot ${r.manager_approval ? 'done' : ''}" title="Manager">M</span>
+                            <span class="clearance-dot ${r.manager_approval ? 'done' : ''}" title="VP">V</span>
                             <span class="clearance-dot ${r.hr_approval ? 'done' : ''}" title="HR">H</span>
                             <span class="clearance-dot ${r.finance_approval ? 'done' : ''}" title="Finance">F</span>
                             <span class="clearance-dot ${r.admin_approval ? 'done' : ''}" title="Admin">A</span>
@@ -3288,7 +3290,7 @@ async function pageResignations() {
 
 function canApproveResignation(r) {
     if (r.status === 'completed' || r.status === 'withdrawn') return false;
-    if (u.role === 'manager' && !r.manager_approval) return true;
+    if (u.role === 'vp' && !r.manager_approval) return true;
     if (u.role === 'hr' && !r.hr_approval) return true;
     if (u.role === 'accountant' && !r.finance_approval) return true;
     if (u.role === 'admin') return !r.manager_approval || !r.hr_approval || !r.finance_approval || !r.admin_approval;
@@ -3314,7 +3316,7 @@ window.viewResignation = async (id) => {
             <div class="clearance-tracker">
                 <div class="clearance-step ${r.manager_approval ? 'done' : 'pending'}">
                     <i class="fas ${r.manager_approval ? 'fa-check-circle' : 'fa-clock'}"></i>
-                    <span>Manager</span>
+                    <span>VP</span>
                     ${r.manager_approved_at ? '<small>'+formatDate(r.manager_approved_at)+'</small>' : ''}
                 </div>
                 <div class="clearance-step ${r.hr_approval ? 'done' : 'pending'}">
@@ -3353,7 +3355,7 @@ window.viewResignation = async (id) => {
 };
 
 window.approveResignation = async (id) => {
-    const deptMap = { manager: 'manager', hr: 'hr', accountant: 'finance', admin: 'admin' };
+    const deptMap = { vp: 'manager', hr: 'hr', accountant: 'finance', admin: 'admin' };
     const dept = deptMap[u.role];
     if (!dept) return toast('You cannot approve', 'error');
     try {
@@ -3376,7 +3378,7 @@ async function pageMyResignation() {
         content.innerHTML = `
             <div class="table-card" style="padding:24px;max-width:600px;margin:0 auto">
                 <h3 style="margin-bottom:16px"><i class="fas fa-person-walking-arrow-right"></i> Submit Resignation</h3>
-                <p style="color:var(--p-text-muted);margin-bottom:16px">A 90-day notice period will be calculated automatically. Please ensure you discuss with your manager before submitting.</p>
+                <p style="color:var(--p-text-muted);margin-bottom:16px">A 90-day notice period will be calculated automatically. Please ensure you discuss with the VP before submitting.</p>
                 <div class="form-group"><label>Reason for Resignation *</label><textarea class="form-control" id="res_reason" rows="4" placeholder="Please provide your reason..."></textarea></div>
                 <div class="form-group"><label>Personal Email *</label><input class="form-control" id="res_email" type="email" placeholder="your.personal@email.com"></div>
                 <button class="btn btn-danger" onclick="submitResignation()" style="width:100%;margin-top:8px"><i class="fas fa-paper-plane"></i> Submit Resignation</button>
@@ -3396,7 +3398,7 @@ async function pageMyResignation() {
                 <div class="clearance-tracker">
                     <div class="clearance-step ${myRes.manager_approval ? 'done' : 'pending'}">
                         <i class="fas ${myRes.manager_approval ? 'fa-check-circle' : 'fa-clock'}"></i>
-                        <span>Manager</span>
+                        <span>VP</span>
                     </div>
                     <div class="clearance-step ${myRes.hr_approval ? 'done' : 'pending'}">
                         <i class="fas ${myRes.hr_approval ? 'fa-check-circle' : 'fa-clock'}"></i>

@@ -302,7 +302,8 @@ tr:hover td { background: rgba(79, 110, 247, 0.03); }
     text-transform: capitalize;
 }
 .badge-status.draft { background: rgba(148,163,184,0.1); color: #94a3b8; }
-.badge-status.pending, .badge-status.pending_approval, .badge-status.submitted { background: rgba(245,158,11,0.1); color: #f59e0b; }
+.badge-status.pending, .badge-status.pending_approval, .badge-status.pending_vp, .badge-status.submitted { background: rgba(245,158,11,0.1); color: #f59e0b; }
+.badge-status.pending_ceo { background: rgba(79,110,247,0.1); color: #4f6ef7; }
 .badge-status.approved, .badge-status.active, .badge-status.released, .badge-status.accepted { background: rgba(6,214,160,0.1); color: #06d6a0; }
 .badge-status.rejected, .badge-status.terminated, .badge-status.inactive { background: rgba(239,68,68,0.1); color: #ef4444; }
 .badge-status.onboarding { background: rgba(79,110,247,0.1); color: #4f6ef7; }

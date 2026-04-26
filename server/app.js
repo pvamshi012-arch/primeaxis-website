@@ -358,7 +358,7 @@ app.post('/api/users', auth, requireRole('admin'), async (req, res) => {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         return res.status(400).json({ error: 'Invalid email format' });
     }
-    if (!['hr', 'manager', 'accountant', 'employee'].includes(role)) {
+    if (!['hr', 'vp', 'accountant', 'employee'].includes(role)) {
         return res.status(400).json({ error: 'Invalid role' });
     }
 
@@ -462,7 +462,7 @@ app.post('/api/users/mark-all-synced', auth, requireRole('admin'), async (req, r
 // ============================================================
 //  EMPLOYEE MANAGEMENT (HR + Admin)
 // ============================================================
-app.get('/api/employees', auth, requireRole('admin', 'hr', 'manager', 'accountant'), async (req, res) => {
+app.get('/api/employees', auth, requireRole('admin', 'hr', 'vp', 'accountant'), async (req, res) => {
     const employees = await db.prepare(`
         SELECT e.*, u.email as login_email, u.role, u.is_active as user_active
         FROM employees e
@@ -537,9 +537,9 @@ app.post('/api/employees/:id/link-user', auth, requireRole('admin', 'hr'), async
 });
 
 // ============================================================
-//  OFFER LETTERS (HR creates, Manager approves, HR releases)
+//  OFFER LETTERS (HR creates, VP approves, CEO approves, HR releases)
 // ============================================================
-app.get('/api/offers', auth, requireRole('admin', 'hr', 'manager'), async (req, res) => {
+app.get('/api/offers', auth, requireRole('admin', 'hr', 'vp'), async (req, res) => {
     const offers = await db.prepare(`
         SELECT o.*, u.name as created_by_name, a.name as approved_by_name
         FROM offer_letters o
@@ -680,23 +680,23 @@ app.use((err, req, res, next) => {
 });
 
 app.put('/api/offers/:id/submit', auth, requireRole('admin', 'hr'), async (req, res) => {
-    await db.prepare('UPDATE offer_letters SET status = ? WHERE id = ? AND status = ?').run('pending_approval', req.params.id, 'draft');
+    await db.prepare('UPDATE offer_letters SET status = ? WHERE id = ? AND status = ?').run('pending_vp', req.params.id, 'draft');
 
-    // Notify managers
-    const managers = await db.prepare('SELECT id FROM users WHERE role = ? AND is_active = 1').all('manager');
+    // Notify VP (Prem) for first-level approval
+    const vpUsers = await db.prepare('SELECT id FROM users WHERE role = ? AND is_active = 1').all('vp');
     const offer = await db.prepare('SELECT employee_name, reference_no FROM offer_letters WHERE id = ?').get(req.params.id);
-    for (const mgr of managers) {
+    for (const vp of vpUsers) {
         await db.prepare('INSERT INTO notifications (user_id, title, message, type, link) VALUES (?, ?, ?, ?, ?)')
-            .run(mgr.id, 'Offer Letter Approval Required', `Offer for ${offer.employee_name} (${offer.reference_no}) needs your approval`, 'warning', '/portal/#offers');
+            .run(vp.id, 'Offer Letter Approval Required', `Offer for ${offer.employee_name} (${offer.reference_no}) needs your approval`, 'warning', '/portal/#offers');
     }
-    // Email all managers about the offer needing approval
-    const mgrUsers = await db.prepare("SELECT email FROM users WHERE role = 'manager' AND is_active = 1").all();
-    for (const mgr of mgrUsers) {
+    // Email VP about the offer needing approval
+    const vpEmails = await db.prepare("SELECT email FROM users WHERE role = 'vp' AND is_active = 1").all();
+    for (const vp of vpEmails) {
         try {
-            await sendEmail(mgr.email, `Offer Approval Required - ${offer.reference_no}`,
+            await sendEmail(vp.email, `Offer Approval Required - ${offer.reference_no}`,
                 `<div style="font-family:Segoe UI,Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
                     <div style="background:linear-gradient(135deg,#001233,#0077b6);padding:20px 28px">
-                        <h2 style="color:#fff;margin:0;font-size:18px">Offer Letter - Approval Required</h2>
+                        <h2 style="color:#fff;margin:0;font-size:18px">Offer Letter - VP Approval Required</h2>
                     </div>
                     <div style="padding:24px 28px">
                         <p style="color:#475569;font-size:15px">An offer letter needs your approval:</p>
@@ -711,20 +711,66 @@ app.put('/api/offers/:id/submit', auth, requireRole('admin', 'hr'), async (req, 
                         </div>
                     </div>
                 </div>`);
-        } catch (e) { console.error('Failed to email manager:', e.message); }
+        } catch (e) { console.error('Failed to email VP:', e.message); }
     }
-    res.json({ message: 'Submitted for approval' });
+    res.json({ message: 'Submitted for VP approval' });
 });
 
-app.put('/api/offers/:id/approve', auth, requireRole('admin', 'manager'), async (req, res) => {
-    await db.prepare('UPDATE offer_letters SET status = ?, approved_by = ?, approved_at = datetime("now") WHERE id = ? AND status = ?')
-        .run('approved', req.user.id, req.params.id, 'pending_approval');
-    res.json({ message: 'Offer approved' });
+// VP approves → moves to CEO/Admin approval
+app.put('/api/offers/:id/vp-approve', auth, requireRole('admin', 'vp'), async (req, res) => {
+    const updated = await db.prepare('UPDATE offer_letters SET status = ?, vp_approved_by = ?, vp_approved_at = datetime("now") WHERE id = ? AND status = ?')
+        .run('pending_ceo', req.user.id, req.params.id, 'pending_vp');
+    if (updated.changes === 0) return res.status(400).json({ error: 'Offer not found or not pending VP approval' });
+
+    // Notify admin/CEO for final approval
+    const admins = await db.prepare('SELECT id FROM users WHERE role = ? AND is_active = 1').all('admin');
+    const offer = await db.prepare('SELECT employee_name, reference_no FROM offer_letters WHERE id = ?').get(req.params.id);
+    for (const adm of admins) {
+        await db.prepare('INSERT INTO notifications (user_id, title, message, type, link) VALUES (?, ?, ?, ?, ?)')
+            .run(adm.id, 'Offer Letter - CEO Approval Required', `Offer for ${offer.employee_name} (${offer.reference_no}) approved by VP, needs your final approval`, 'warning', '/portal/#offers');
+    }
+    // Email CEO/admin
+    const adminEmails = await db.prepare("SELECT email FROM users WHERE role = 'admin' AND is_active = 1").all();
+    for (const adm of adminEmails) {
+        try {
+            await sendEmail(adm.email, `CEO Approval Required - ${offer.reference_no}`,
+                `<div style="font-family:Segoe UI,Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
+                    <div style="background:linear-gradient(135deg,#001233,#0077b6);padding:20px 28px">
+                        <h2 style="color:#fff;margin:0;font-size:18px">Offer Letter - CEO Final Approval</h2>
+                    </div>
+                    <div style="padding:24px 28px">
+                        <p style="color:#475569;font-size:15px">An offer letter has been approved by the VP and needs your final approval:</p>
+                        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin:16px 0">
+                            <table style="width:100%;border-collapse:collapse;font-size:14px">
+                                <tr><td style="padding:6px 0;color:#64748b">Reference</td><td style="padding:6px 0;font-weight:600;text-align:right">${offer.reference_no}</td></tr>
+                                <tr><td style="padding:6px 0;color:#64748b">Candidate</td><td style="padding:6px 0;font-weight:600;text-align:right">${offer.employee_name}</td></tr>
+                            </table>
+                        </div>
+                        <div style="text-align:center;margin:20px 0">
+                            <a href="https://testing.primeaxisit.com/portal/#offers" style="display:inline-block;background:linear-gradient(135deg,#0077b6,#00b4d8);color:#fff;padding:10px 28px;border-radius:6px;text-decoration:none;font-weight:600">Review Offer</a>
+                        </div>
+                    </div>
+                </div>`);
+        } catch (e) { console.error('Failed to email CEO:', e.message); }
+    }
+    res.json({ message: 'VP approved. Sent to CEO for final approval.' });
 });
 
-app.put('/api/offers/:id/reject', auth, requireRole('admin', 'manager'), async (req, res) => {
-    await db.prepare('UPDATE offer_letters SET status = ? WHERE id = ? AND status = ?')
-        .run('draft', req.params.id, 'pending_approval');
+// CEO/Admin final approval
+app.put('/api/offers/:id/ceo-approve', auth, requireRole('admin'), async (req, res) => {
+    const updated = await db.prepare('UPDATE offer_letters SET status = ?, approved_by = ?, approved_at = datetime("now") WHERE id = ? AND status = ?')
+        .run('approved', req.user.id, req.params.id, 'pending_ceo');
+    if (updated.changes === 0) return res.status(400).json({ error: 'Offer not found or not pending CEO approval' });
+    res.json({ message: 'Offer approved by CEO. HR can now release.' });
+});
+
+// VP or CEO can reject at any stage
+app.put('/api/offers/:id/reject', auth, requireRole('admin', 'vp'), async (req, res) => {
+    const offer = await db.prepare('SELECT status FROM offer_letters WHERE id = ?').get(req.params.id);
+    if (!offer || !['pending_vp', 'pending_ceo'].includes(offer.status)) {
+        return res.status(400).json({ error: 'Offer not found or not pending approval' });
+    }
+    await db.prepare('UPDATE offer_letters SET status = ? WHERE id = ?').run('draft', req.params.id);
     res.json({ message: 'Offer rejected and sent back to draft' });
 });
 
@@ -879,7 +925,7 @@ app.get('/api/my/leaves', auth, async (req, res) => {
     res.json(leaves);
 });
 
-// All timesheets (admin/hr/manager see all, employee sees own)
+// All timesheets (admin/hr/vp see all, employee sees own)
 app.get('/api/timesheets', auth, async (req, res) => {
     let query, params;
     if (req.user.role === 'employee') {
@@ -920,13 +966,13 @@ app.put('/api/timesheets/:id/submit', auth, async (req, res) => {
     res.json({ message: 'Timesheet submitted for approval' });
 });
 
-app.put('/api/timesheets/:id/approve', auth, requireRole('admin', 'manager'), async (req, res) => {
+app.put('/api/timesheets/:id/approve', auth, requireRole('admin', 'vp'), async (req, res) => {
     await db.prepare('UPDATE timesheets SET status = ?, approved_by = ?, approved_at = datetime("now") WHERE id = ? AND status = ?')
         .run('approved', req.user.id, req.params.id, 'submitted');
     res.json({ message: 'Timesheet approved' });
 });
 
-app.put('/api/timesheets/:id/reject', auth, requireRole('admin', 'manager'), async (req, res) => {
+app.put('/api/timesheets/:id/reject', auth, requireRole('admin', 'vp'), async (req, res) => {
     const { reason } = req.body;
     await db.prepare('UPDATE timesheets SET status = ?, reject_reason = ? WHERE id = ? AND status = ?')
         .run('rejected', reason || '', req.params.id, 'submitted');
@@ -1069,7 +1115,7 @@ app.post('/api/leaves/check-lop', auth, async (req, res) => {
     res.json({ days, is_lop, lop_days, available, leave_type, balance: bal });
 });
 
-app.put('/api/leaves/:id/approve', auth, requireRole('admin', 'manager'), async (req, res) => {
+app.put('/api/leaves/:id/approve', auth, requireRole('admin', 'vp'), async (req, res) => {
     const leave = await db.prepare('SELECT * FROM leaves WHERE id = ? AND status = ?').get(req.params.id, 'pending');
     if (!leave) return res.status(400).json({ error: 'Leave not found or already processed' });
 
@@ -1098,7 +1144,7 @@ app.put('/api/leaves/:id/approve', auth, requireRole('admin', 'manager'), async 
     res.json({ message: leave.lop_days > 0 ? `Leave approved (${leave.lop_days} day(s) as Loss of Pay)` : 'Leave approved' });
 });
 
-app.put('/api/leaves/:id/reject', auth, requireRole('admin', 'manager'), async (req, res) => {
+app.put('/api/leaves/:id/reject', auth, requireRole('admin', 'vp'), async (req, res) => {
     const { reason } = req.body;
     await db.prepare('UPDATE leaves SET status = ?, reject_reason = ? WHERE id = ? AND status = ?')
         .run('rejected', reason || '', req.params.id, 'pending');
@@ -1469,14 +1515,14 @@ app.get('/api/dashboard', auth, async (req, res) => {
     if (['admin', 'hr'].includes(req.user.role)) {
         stats.totalEmployees = (await db.prepare('SELECT COUNT(*) as c FROM employees WHERE status != ?').get('terminated')).c;
         stats.activeEmployees = (await db.prepare('SELECT COUNT(*) as c FROM employees WHERE status = ?').get('active')).c;
-        stats.pendingOffers = (await db.prepare('SELECT COUNT(*) as c FROM offer_letters WHERE status IN (?, ?)').get('draft', 'pending_approval')).c;
+        stats.pendingOffers = (await db.prepare("SELECT COUNT(*) as c FROM offer_letters WHERE status IN ('draft', 'pending_vp', 'pending_ceo')").get()).c;
         stats.pendingLeaves = (await db.prepare('SELECT COUNT(*) as c FROM leaves WHERE status = ?').get('pending')).c;
         stats.openTickets = (await db.prepare("SELECT COUNT(*) as c FROM tickets WHERE status IN ('open','in_progress','reopened')").get()).c;
     }
-    if (['admin', 'manager'].includes(req.user.role)) {
+    if (['admin', 'vp'].includes(req.user.role)) {
         stats.pendingTimesheets = (await db.prepare('SELECT COUNT(*) as c FROM timesheets WHERE status = ?').get('submitted')).c;
         stats.pendingLeaveApprovals = (await db.prepare('SELECT COUNT(*) as c FROM leaves WHERE status = ?').get('pending')).c;
-        stats.pendingOfferApprovals = (await db.prepare('SELECT COUNT(*) as c FROM offer_letters WHERE status = ?').get('pending_approval')).c;
+        stats.pendingOfferApprovals = (await db.prepare("SELECT COUNT(*) as c FROM offer_letters WHERE status IN ('pending_vp', 'pending_ceo')").get()).c;
     }
     if (['admin', 'accountant'].includes(req.user.role)) {
         const now = new Date();
@@ -1859,10 +1905,10 @@ app.put('/api/tax-declarations/:id/reject', auth, requireRole('admin', 'hr', 'ac
 //  SUPPORT TICKETS
 // ============================================================
 
-// List tickets — admin/hr/manager see all, employees see their own
+// List tickets — admin/hr/vp see all, employees see their own
 app.get('/api/tickets', auth, async (req, res) => {
     let query, params;
-    if (['admin', 'hr', 'manager'].includes(req.user.role)) {
+    if (['admin', 'hr', 'vp'].includes(req.user.role)) {
         query = `SELECT t.*, u.name as raised_by_name, a.name as assigned_to_name, e.employee_code
             FROM tickets t
             LEFT JOIN users u ON t.raised_by = u.id
@@ -1965,8 +2011,8 @@ app.post('/api/tickets/:id/comment', auth, async (req, res) => {
     res.json({ message: 'Comment added' });
 });
 
-// Update ticket status (admin/hr/manager)
-app.put('/api/tickets/:id/status', auth, requireRole('admin', 'hr', 'manager'), async (req, res) => {
+// Update ticket status (admin/hr/vp)
+app.put('/api/tickets/:id/status', auth, requireRole('admin', 'hr', 'vp'), async (req, res) => {
     const { status, resolution } = req.body;
     if (!status) return res.status(400).json({ error: 'Status is required' });
 
@@ -2360,14 +2406,14 @@ app.post('/api/resignations', auth, async (req, res) => {
     `).run(emp.id, resignationDate, lastWorkingDay, reason, personal_email || '');
 
     // Notify all approvers
-    const approvers = await db.prepare("SELECT id FROM users WHERE role IN ('admin','hr','manager','accountant') AND is_active = 1").all();
+    const approvers = await db.prepare("SELECT id FROM users WHERE role IN ('admin','hr','vp','accountant') AND is_active = 1").all();
     for (const a of approvers) {
         await db.prepare('INSERT INTO notifications (user_id, title, message, type, link) VALUES (?, ?, ?, ?, ?)')
             .run(a.id, 'Resignation Submitted', `${emp.name} (${emp.employee_code}) has submitted resignation. Last working day: ${lastWorkingDay}`, 'warning', '/portal/#resignations');
     }
 
-    // Email managers about new resignation
-    const mgrList = await db.prepare("SELECT email FROM users WHERE role IN ('manager','hr') AND is_active = 1").all();
+    // Email VP and HR about new resignation
+    const mgrList = await db.prepare("SELECT email FROM users WHERE role IN ('vp','hr') AND is_active = 1").all();
     for (const m of mgrList) {
         try {
             await sendEmail(m.email, `Resignation Submitted - ${emp.name}`,
@@ -2400,7 +2446,7 @@ app.put('/api/resignations/:id/approve/:dept', auth, async (req, res) => {
     const validDepts = { manager: 'manager', hr: 'hr', finance: 'finance', admin: 'admin' };
     if (!validDepts[dept]) return res.status(400).json({ error: 'Invalid department' });
 
-    const roleMap = { manager: ['admin','manager'], hr: ['admin','hr'], finance: ['admin','accountant'], admin: ['admin'] };
+    const roleMap = { manager: ['admin','vp'], hr: ['admin','hr'], finance: ['admin','accountant'], admin: ['admin'] };
     if (!roleMap[dept].includes(req.user.role)) return res.status(403).json({ error: 'Not authorized for this approval' });
 
     const resign = await db.prepare('SELECT * FROM resignations WHERE id = ?').get(req.params.id);
