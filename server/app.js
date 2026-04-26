@@ -963,16 +963,35 @@ app.put('/api/timesheets/:id/submit', auth, async (req, res) => {
     if (!ts) return res.status(400).json({ error: 'Timesheet not found or not in draft' });
 
     await db.prepare('UPDATE timesheets SET status = ?, submitted_at = datetime("now") WHERE id = ?').run('submitted', req.params.id);
+
+    // If VP submits, notify CEO (admin) directly
+    if (req.user.role === 'vp') {
+        const admins = await db.prepare("SELECT id FROM users WHERE role = 'admin' AND is_active = 1").all();
+        for (const adm of admins) {
+            await db.prepare('INSERT INTO notifications (user_id, title, message, type, link) VALUES (?, ?, ?, ?, ?)')
+                .run(adm.id, 'VP Timesheet Submitted', `${req.user.name} has submitted a timesheet for your approval`, 'info', '/portal/#timesheets');
+        }
+    }
     res.json({ message: 'Timesheet submitted for approval' });
 });
 
 app.put('/api/timesheets/:id/approve', auth, requireRole('admin', 'vp'), async (req, res) => {
+    // Prevent self-approval: VP cannot approve their own timesheet
+    const ts = await db.prepare('SELECT t.employee_id, e.user_id FROM timesheets t JOIN employees e ON t.employee_id = e.id WHERE t.id = ? AND t.status = ?').get(req.params.id, 'submitted');
+    if (!ts) return res.status(400).json({ error: 'Timesheet not found or not submitted' });
+    if (ts.user_id === req.user.id) return res.status(403).json({ error: 'You cannot approve your own timesheet. It must be approved by the CEO.' });
+
     await db.prepare('UPDATE timesheets SET status = ?, approved_by = ?, approved_at = datetime("now") WHERE id = ? AND status = ?')
         .run('approved', req.user.id, req.params.id, 'submitted');
     res.json({ message: 'Timesheet approved' });
 });
 
 app.put('/api/timesheets/:id/reject', auth, requireRole('admin', 'vp'), async (req, res) => {
+    // Prevent self-rejection
+    const ts = await db.prepare('SELECT t.employee_id, e.user_id FROM timesheets t JOIN employees e ON t.employee_id = e.id WHERE t.id = ? AND t.status = ?').get(req.params.id, 'submitted');
+    if (!ts) return res.status(400).json({ error: 'Timesheet not found or not submitted' });
+    if (ts.user_id === req.user.id) return res.status(403).json({ error: 'You cannot reject your own timesheet.' });
+
     const { reason } = req.body;
     await db.prepare('UPDATE timesheets SET status = ?, reject_reason = ? WHERE id = ? AND status = ?')
         .run('rejected', reason || '', req.params.id, 'submitted');
@@ -1062,6 +1081,15 @@ app.post('/api/leaves', auth, async (req, res) => {
         'INSERT INTO leaves (employee_id, leave_type, from_date, to_date, days, reason, is_lop, lop_days) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
     ).run(emp.id, leave_type, from_date, to_date, days, reason, is_lop, lop_days);
 
+    // If VP applies leave, notify CEO (admin) directly
+    if (req.user.role === 'vp') {
+        const admins = await db.prepare("SELECT id FROM users WHERE role = 'admin' AND is_active = 1").all();
+        for (const adm of admins) {
+            await db.prepare('INSERT INTO notifications (user_id, title, message, type, link) VALUES (?, ?, ?, ?, ?)')
+                .run(adm.id, 'VP Leave Request', `${req.user.name} has applied for ${days} day(s) ${leave_type} leave (${from_date} to ${to_date})`, 'warning', '/portal/#leaves');
+        }
+    }
+
     res.json({ id: result.lastInsertRowid, days, is_lop, lop_days, message: is_lop ? `Leave applied: ${days} day(s), ${lop_days} day(s) will be Loss of Pay` : `Leave applied for ${days} day(s)` });
 });
 
@@ -1119,6 +1147,10 @@ app.put('/api/leaves/:id/approve', auth, requireRole('admin', 'vp'), async (req,
     const leave = await db.prepare('SELECT * FROM leaves WHERE id = ? AND status = ?').get(req.params.id, 'pending');
     if (!leave) return res.status(400).json({ error: 'Leave not found or already processed' });
 
+    // Prevent self-approval: VP cannot approve their own leave
+    const empCheck = await db.prepare('SELECT user_id FROM employees WHERE id = ?').get(leave.employee_id);
+    if (empCheck && empCheck.user_id === req.user.id) return res.status(403).json({ error: 'You cannot approve your own leave. It must be approved by the CEO.' });
+
     await db.prepare("UPDATE leaves SET status = ?, approved_by = ?, approved_at = datetime('now') WHERE id = ?")
         .run('approved', req.user.id, req.params.id);
 
@@ -1145,6 +1177,11 @@ app.put('/api/leaves/:id/approve', auth, requireRole('admin', 'vp'), async (req,
 });
 
 app.put('/api/leaves/:id/reject', auth, requireRole('admin', 'vp'), async (req, res) => {
+    // Prevent self-rejection
+    const leave = await db.prepare('SELECT l.employee_id, e.user_id FROM leaves l JOIN employees e ON l.employee_id = e.id WHERE l.id = ? AND l.status = ?').get(req.params.id, 'pending');
+    if (!leave) return res.status(400).json({ error: 'Leave not found or not pending' });
+    if (leave.user_id === req.user.id) return res.status(403).json({ error: 'You cannot reject your own leave.' });
+
     const { reason } = req.body;
     await db.prepare('UPDATE leaves SET status = ?, reject_reason = ? WHERE id = ? AND status = ?')
         .run('rejected', reason || '', req.params.id, 'pending');
