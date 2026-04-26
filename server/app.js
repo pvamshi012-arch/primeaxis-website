@@ -592,7 +592,7 @@ app.put('/api/my/offer/accept', auth, async (req, res) => {
                             <p style="margin:4px 0;font-size:14px"><strong>Date of Joining:</strong> ${offer.date_of_joining}</p>
                         </div>
                         <div style="text-align:center;margin:20px 0">
-                            <a href="https://testing.primeaxisit.com/portal/#offers" style="display:inline-block;background:#059669;color:#fff;padding:10px 28px;border-radius:6px;text-decoration:none;font-weight:600">View in Portal</a>
+                            <a href="https://primeaxisit.com/portal/#offers" style="display:inline-block;background:#059669;color:#fff;padding:10px 28px;border-radius:6px;text-decoration:none;font-weight:600">View in Portal</a>
                         </div>
                     </div>
                 </div>`);
@@ -659,7 +659,7 @@ app.post('/api/contact', async (req, res) => {
                         <tr><td style="padding:8px 0;color:#64748b;vertical-align:top"><strong>Message</strong></td><td style="padding:8px 0;color:#0f172a;line-height:1.6">${message}</td></tr>
                     </table>
                 </div>
-                <div style="background:#f1f5f9;padding:12px 28px;font-size:12px;color:#94a3b8">Sent from testing.primeaxisit.com contact form</div>
+                <div style="background:#f1f5f9;padding:12px 28px;font-size:12px;color:#94a3b8">Sent from primeaxisit.com contact form</div>
             </div>`, 'info@primeaxisit.com');
         res.json({ message: 'Message sent successfully' });
     } catch (err) {
@@ -707,7 +707,7 @@ app.put('/api/offers/:id/submit', auth, requireRole('admin', 'hr'), async (req, 
                             </table>
                         </div>
                         <div style="text-align:center;margin:20px 0">
-                            <a href="https://testing.primeaxisit.com/portal/#offers" style="display:inline-block;background:linear-gradient(135deg,#0077b6,#00b4d8);color:#fff;padding:10px 28px;border-radius:6px;text-decoration:none;font-weight:600">Review Offer</a>
+                            <a href="https://primeaxisit.com/portal/#offers" style="display:inline-block;background:linear-gradient(135deg,#0077b6,#00b4d8);color:#fff;padding:10px 28px;border-radius:6px;text-decoration:none;font-weight:600">Review Offer</a>
                         </div>
                     </div>
                 </div>`);
@@ -747,7 +747,7 @@ app.put('/api/offers/:id/vp-approve', auth, requireRole('admin', 'vp'), async (r
                             </table>
                         </div>
                         <div style="text-align:center;margin:20px 0">
-                            <a href="https://testing.primeaxisit.com/portal/#offers" style="display:inline-block;background:linear-gradient(135deg,#0077b6,#00b4d8);color:#fff;padding:10px 28px;border-radius:6px;text-decoration:none;font-weight:600">Review Offer</a>
+                            <a href="https://primeaxisit.com/portal/#offers" style="display:inline-block;background:linear-gradient(135deg,#0077b6,#00b4d8);color:#fff;padding:10px 28px;border-radius:6px;text-decoration:none;font-weight:600">Review Offer</a>
                         </div>
                     </div>
                 </div>`);
@@ -879,7 +879,7 @@ app.put('/api/offers/:id/release', auth, requireRole('admin', 'hr'), async (req,
                             <p style="margin:8px 0 0;font-size:12px;color:#64748b">&#9888; This temporary password expires in 24 hours. You will be asked to set a new password on first login.</p>
                         </div>
                         <div style="margin:24px 0;text-align:center">
-                            <a href="https://testing.primeaxisit.com/portal/login.html" style="display:inline-block;background:linear-gradient(135deg,#0077b6,#00b4d8);color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-weight:600;font-size:15px">Login &amp; Accept Offer</a>
+                            <a href="https://primeaxisit.com/portal/login.html" style="display:inline-block;background:linear-gradient(135deg,#0077b6,#00b4d8);color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-weight:600;font-size:15px">Login &amp; Accept Offer</a>
                         </div>
                         <p style="color:#94a3b8;font-size:13px;line-height:1.6">If you have any questions, please reach out to HR at <a href="mailto:hr@primeaxisit.com" style="color:#0077b6">hr@primeaxisit.com</a> or call +91 8333079944.</p>
                     </div>
@@ -2179,7 +2179,7 @@ app.post('/api/bgv/invite', auth, requireRole('admin', 'hr'), async (req, res) =
                         </table>
                     </div>
                     <div style="text-align:center;margin:20px 0">
-                        <a href="https://testing.primeaxisit.com/portal/bgv.html?token=${accessToken}" style="display:inline-block;background:linear-gradient(135deg,#0077b6,#00b4d8);color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-weight:600;font-size:15px">Complete BGV Form</a>
+                        <a href="https://primeaxisit.com/portal/bgv.html?token=${accessToken}" style="display:inline-block;background:linear-gradient(135deg,#0077b6,#00b4d8);color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-weight:600;font-size:15px">Complete BGV Form</a>
                     </div>
                     <p style="color:#94a3b8;font-size:13px">If you have questions, contact HR at <a href="mailto:hr@primeaxisit.com" style="color:#0077b6">hr@primeaxisit.com</a></p>
                 </div>
@@ -2468,7 +2468,7 @@ app.post('/api/resignations', auth, async (req, res) => {
                             </table>
                         </div>
                         <div style="text-align:center;margin:20px 0">
-                            <a href="https://testing.primeaxisit.com/portal/#resignations" style="display:inline-block;background:#dc2626;color:#fff;padding:10px 28px;border-radius:6px;text-decoration:none;font-weight:600">Review Resignation</a>
+                            <a href="https://primeaxisit.com/portal/#resignations" style="display:inline-block;background:#dc2626;color:#fff;padding:10px 28px;border-radius:6px;text-decoration:none;font-weight:600">Review Resignation</a>
                         </div>
                     </div>
                 </div>`);
@@ -2521,7 +2521,7 @@ app.put('/api/resignations/:id/approve/:dept', auth, async (req, res) => {
                         </div>
                         ${updated.manager_approval && updated.hr_approval && updated.finance_approval && updated.admin_approval ? '<p style="color:#059669;font-weight:700;font-size:16px;text-align:center">All approvals complete - Resignation finalized</p>' : ''}
                         <div style="text-align:center;margin:20px 0">
-                            <a href="https://testing.primeaxisit.com/portal/#resignations" style="display:inline-block;background:#059669;color:#fff;padding:10px 28px;border-radius:6px;text-decoration:none;font-weight:600">View Details</a>
+                            <a href="https://primeaxisit.com/portal/#resignations" style="display:inline-block;background:#059669;color:#fff;padding:10px 28px;border-radius:6px;text-decoration:none;font-weight:600">View Details</a>
                         </div>
                     </div>
                 </div>`);
