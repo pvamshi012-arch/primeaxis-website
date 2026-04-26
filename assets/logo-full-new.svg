@@ -30,5 +30,5 @@
   <text x="122" y="58" font-family="'Poppins', 'Inter', 'Segoe UI', sans-serif" font-weight="700" font-size="40" letter-spacing="-1" fill="#ffffff">Prime</text>
   <text x="230" y="58" font-family="'Poppins', 'Inter', 'Segoe UI', sans-serif" font-weight="700" font-size="40" letter-spacing="-1" fill="url(#axisText)">Axis</text>
   <!-- IT SOLUTIONS -->
-  <text x="124" y="80" font-family="'Inter', 'Poppins', 'Segoe UI', sans-serif" font-weight="600" font-size="13" fill="#48cae4" letter-spacing="4.5" opacity="0.85">IT SOLUTIONS</text>
+  <text x="208" y="80" font-family="'Inter', 'Poppins', 'Segoe UI', sans-serif" font-weight="600" font-size="13" fill="#48cae4" letter-spacing="4.5" opacity="0.85" text-anchor="middle">IT SOLUTIONS</text>
 </svg>
