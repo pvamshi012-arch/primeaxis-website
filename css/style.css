@@ -2604,7 +2604,9 @@ img {
 }
 
 .tech-tag {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
     padding: 0.4rem 1rem;
     background: rgba(79, 110, 247, 0.1);
     color: #a5b4fc;
@@ -2613,6 +2615,21 @@ img {
     font-weight: 600;
     border: 1px solid rgba(79, 110, 247, 0.2);
     transition: all 0.3s ease;
+}
+
+.tech-tag i {
+    font-size: 1.1rem;
+}
+
+.tech-icon-svg {
+    width: 16px;
+    height: 16px;
+    filter: brightness(0) invert(0.7) sepia(1) saturate(3) hue-rotate(200deg);
+    vertical-align: middle;
+}
+
+.tech-tag:hover .tech-icon-svg {
+    filter: brightness(0) invert(1);
 }
 
 .tech-tag:hover {
