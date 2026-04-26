@@ -2822,7 +2822,7 @@ app.use((err, req, res, next) => {
 // ============================================================
 //  START SERVER
 // ============================================================
-initDatabase().then(() => {
+initDatabase().catch(err => { console.error("DB init failed:", err); });
 app.listen(PORT, () => {
     console.log(`
 ╔══════════════════════════════════════════════════╗
@@ -2833,4 +2833,3 @@ app.listen(PORT, () => {
 ╚══════════════════════════════════════════════════╝
     `);
 });
-}).catch(err => { console.error("DB init failed:", err); process.exit(1); });
