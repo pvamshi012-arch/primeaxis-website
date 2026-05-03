@@ -899,21 +899,13 @@ function renderOfferLetter(o) {
         <p>Phone: +91 8333079944 | Email: info@primeaxisit.com | Web: www.primeaxisit.com</p>
     </div>`;
 
-    const letterheadFull = `<div class="letterhead">
-        <div class="lh-left">
-            <img src="../assets/logo/2.png" alt="PrimeAxis IT Solutions" class="lh-logo">
-        </div>
-        <div class="lh-right">
-            Plot No: 207, Road No: 8, Vasanth Nagar<br>
-            Near JNTU Metro Station, KPHB<br>
-            Hyderabad - 500072, Telangana<br>
-            Phone: +91 8333079944<br>
-            Email: info@primeaxisit.com
-        </div>
+    const letterheadFull = `<div class="letterhead letterhead-centered">
+        <img src="../assets/logo-full-new.svg" alt="PrimeAxis IT Solutions" class="lh-logo-centered">
+        <div class="lh-tagline">Your Needs. Our Technology.</div>
     </div>`;
 
     const letterheadMini = (pg) => `<div class="letterhead-mini">
-        <img src="../assets/logo/2.png" alt="PrimeAxis IT Solutions" style="height:32px">
+        <img src="../assets/logo-full-new.svg" alt="PrimeAxis IT Solutions" style="height:28px">
         <span>Ref: ${esc(o.reference_no)} | Page ${pg}</span>
     </div>`;
 
@@ -2140,21 +2132,9 @@ window.viewRelieving = async (id) => {
 function renderRelievingLetter(r) {
     return `<div class="offer-preview">
         <div class="letter-page">
-            <div class="letterhead">
-                <div class="lh-left">
-                    <img src="../assets/logo-icon-new.svg" alt="PrimeAxis IT" class="lh-logo">
-                    <div class="lh-company">
-                        <h1>PrimeAxis IT Solutions</h1>
-                        <p>Innovative Technology Services</p>
-                    </div>
-                </div>
-                <div class="lh-right">
-                    Plot No: 207, Road No: 8, Vasanth Nagar<br>
-                    Near JNTU Metro Station, KPHB<br>
-                    Hyderabad - 500072, Telangana<br>
-                    Phone: +91 8333079944<br>
-                    Email: info@primeaxisit.com
-                </div>
+            <div class="letterhead letterhead-centered">
+                <img src="../assets/logo-full-new.svg" alt="PrimeAxis IT Solutions" class="lh-logo-centered">
+                <div class="lh-tagline">Your Needs. Our Technology.</div>
             </div>
 
             <div class="ref-row">

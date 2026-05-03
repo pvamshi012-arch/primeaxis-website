@@ -616,6 +616,31 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 .offer-preview .lh-company p { font-size: 11px; color: #4f6ef7; margin: 2px 0 0; font-weight: 600; letter-spacing: 0.5px; }
 .offer-preview .lh-right { text-align: right; font-size: 11px; color: #666; line-height: 1.6; }
 
+/* Centered letterhead (new style) */
+.offer-preview .letterhead.letterhead-centered {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding-bottom: 18px;
+    margin-bottom: 24px;
+    border-bottom: 3px solid #4f6ef7;
+}
+.offer-preview .lh-logo-centered {
+    height: 70px;
+    object-fit: contain;
+    margin: 0 auto 8px;
+    display: block;
+}
+.offer-preview .lh-tagline {
+    font-size: 12px;
+    color: #4f6ef7;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-top: 4px;
+}
+
 .offer-preview .letterhead-mini {
     display: flex;
     align-items: center;
