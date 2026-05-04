@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Payslip Preview</title>
+<link rel="stylesheet" href="portal/css/portal.css">
+<style>
+  body { background: #fff; padding: 0; margin: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+  .preview-wrap { max-width: 100%; margin: 0; background: #fff; border-radius: 0; box-shadow: none; padding: 0; }
+</style>
+</head>
+<body>
+<div class="preview-wrap" id="root">Loading…</div>
+
+<script src="portal/js/portal.js"></script>
+<script>
+  const ps = {
+    id: 1,
+    employee_name: 'Vamshi Pasham',
+    employee_code: 'PAX-0099',
+    designation: 'Software Developer',
+    department: 'Engineering',
+    month: 4,
+    year: 2026,
+    working_days: 22,
+    present_days: 22,
+    gross_earnings: 70000,
+    total_deductions: 8000,
+    net_pay: 62000
+  };
+  const emp = {
+    date_of_joining: '2024-01-15',
+    pan: 'ABCDE1234F',
+    uan: '101234567890',
+    phone: '+91 9000000000',
+    bank_name: 'HDFC Bank',
+    bank_account: '50100123456789',
+    ifsc_code: 'HDFC0001234'
+  };
+  const earn = { basic: 30000, hra: 15000, specialAllowance: 25000 };
+  const ded  = { employeePF: 3600, professionalTax: 200, tds: 4200, employeeESI: 0 };
+  const empContrib = { employerPF: 3600, employerESI: 0, regime: 'new', totalExemptions: 0, tdsAnnual: 50400 };
+
+  try {
+    document.getElementById('root').innerHTML = renderPayslip(ps, emp, earn, ded, empContrib);
+  } catch (e) {
+    document.getElementById('root').innerHTML = '<pre style="color:red">Error: ' + e.message + '</pre>';
+    console.error(e);
+  }
+</script>
+</body>
+</html>

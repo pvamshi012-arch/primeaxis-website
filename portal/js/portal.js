@@ -893,19 +893,48 @@ function renderOfferLetter(o) {
     const m = b.monthly, a = b.annual;
     const ctcWords = amountInWords(a.ctc);
 
+    const printFooter = `<div class="print-footer"><strong>PrimeAxis IT Solutions</strong> | Plot No: 207, Road No: 8, Vasanth Nagar, Near JNTU Metro Station, KPHB, Hyderabad - 500072, Telangana, India<br>Phone: +91 8333079944 | Email: info@primeaxisit.com | Web: www.primeaxisit.com</div>`;
+
     const companyFooter = `<div class="letter-footer">
         <div class="footer-line"></div>
         <p><strong>PrimeAxis IT Solutions</strong> | Plot No: 207, Road No: 8, Vasanth Nagar, Near JNTU Metro Station, KPHB, Hyderabad - 500072, Telangana, India</p>
         <p>Phone: +91 8333079944 | Email: info@primeaxisit.com | Web: www.primeaxisit.com</p>
     </div>`;
 
-    const letterheadFull = `<div class="letterhead letterhead-centered">
-        <img src="../assets/logo-full-new.svg" alt="PrimeAxis IT Solutions" class="lh-logo-centered">
-        <div class="lh-tagline">Your Needs. Our Technology.</div>
+    const logoSvg = `<svg class="lh-icon" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <linearGradient id="paBg-${o.id}" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#001233"/>
+                <stop offset="50%" stop-color="#023e8a"/>
+                <stop offset="100%" stop-color="#0077b6"/>
+            </linearGradient>
+            <linearGradient id="paDot-${o.id}" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#90e0ef"/>
+                <stop offset="100%" stop-color="#00b4d8"/>
+            </linearGradient>
+        </defs>
+        <rect width="512" height="512" rx="96" fill="url(#paBg-${o.id})"/>
+        <path d="M148 88 L308 88 L390 180 L308 270 L214 270 L214 424 L148 424Z M214 148 L300 148 L350 180 L300 212 L214 212Z" fill="white" fill-rule="evenodd"/>
+        <circle cx="348" cy="58" r="20" fill="url(#paDot-${o.id})"/>
+    </svg>`;
+
+    const letterheadFull = `<div class="letterhead letterhead-brand letterhead-with-title">
+        <div class="lh-brand">
+            ${logoSvg}
+            <div class="lh-text">
+                <span class="lh-name">Prime<span class="lh-name-accent">Axis</span></span>
+                <span class="lh-sub">IT Solutions</span>
+            </div>
+        </div>
+        <h2 class="letter-title letter-title-inline">Offer Letter</h2>
+        <span class="lh-spacer" aria-hidden="true"></span>
     </div>`;
 
     const letterheadMini = (pg) => `<div class="letterhead-mini">
-        <img src="../assets/logo-full-new.svg" alt="PrimeAxis IT Solutions" style="height:28px">
+        <div class="lh-brand" style="gap:8px">
+            ${logoSvg.replace('class="lh-icon"', 'class="lh-icon" style="height:28px;width:28px"')}
+            <span class="lh-name" style="font-size:16px">Prime<span class="lh-name-accent">Axis</span></span>
+        </div>
         <span>Ref: ${esc(o.reference_no)} | Page ${pg}</span>
     </div>`;
 
@@ -926,8 +955,6 @@ function renderOfferLetter(o) {
                 ${o.employee_email ? '<br>Email: ' + esc(o.employee_email) : ''}
                 ${o.employee_phone ? '<br>Phone: ' + esc(o.employee_phone) : ''}
             </div>
-
-            <div class="subject">Subject: <strong>${o.employment_type === 'contract' ? 'Contract Employment Offer' : 'Offer of Employment'} — ${esc(o.designation)}</strong></div>
 
             <p>Dear <strong>${esc(o.employee_name)}</strong>,</p>
 
@@ -958,13 +985,10 @@ function renderOfferLetter(o) {
 
             ${o.relocation_expense > 0 ? `<h3 class="section-title" style="margin-top:18px">Relocation Assistance</h3>
             <p>The company shall provide a <strong>one-time Relocation Assistance of ${formatINR(o.relocation_expense)}</strong> (${amountInWords(o.relocation_expense)}) to support your relocation to the work location. This amount will be disbursed within your first month of joining, subject to submission of relevant receipts and applicable tax deductions.</p>` : ''}
-
-            ${companyFooter}
         </div>
 
         <!-- PAGE 2: Compensation -->
         <div class="letter-page">
-            ${letterheadMini(2)}
 
             <h3 class="section-title">2. Compensation Details</h3>
             <p>Your Cost to Company (CTC) is <strong>${formatINR(a.ctc)}</strong> (${ctcWords}) per annum, broken down as follows:</p>
@@ -1003,13 +1027,10 @@ function renderOfferLetter(o) {
             </table>
 
             <p class="disclaimer">* The above deductions are indicative and may vary based on actual tax declarations, investment proofs submitted under applicable sections, and prevailing government regulations.</p>
-
-            ${companyFooter}
         </div>
 
         <!-- PAGE 3: Terms & Conditions -->
         <div class="letter-page">
-            ${letterheadMini(3)}
 
             <h3 class="section-title">3. General Terms & Conditions</h3>
             <ol class="terms-list">
@@ -1049,13 +1070,10 @@ function renderOfferLetter(o) {
 
                 ${o.additional_terms ? `<li><strong>Additional Terms:</strong> ${esc(o.additional_terms)}</li>` : ''}
             </ol>
-
-            ${companyFooter}
         </div>
 
         <!-- PAGE 4: Documents Required & Acceptance -->
         <div class="letter-page">
-            ${letterheadMini(4)}
 
             <h3 class="section-title">4. Documents Required at the Time of Joining</h3>
             <p>Please ensure you submit the following documents on or before your date of joining:</p>
@@ -1092,9 +1110,8 @@ function renderOfferLetter(o) {
                     <span>Signature: ________________________</span>
                 </div>
             </div>
-
-            ${companyFooter}
         </div>
+        ${printFooter}
     </div>`;
 }
 
@@ -1410,13 +1427,27 @@ window.viewPayslip = async (id) => {
 };
 
 function renderPayslip(ps, emp, earn, ded, empContrib) {
+    const logoSvg = `<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" style="height:42px;width:42px;flex-shrink:0;border-radius:10px;box-shadow:0 3px 10px rgba(79,110,247,0.22);">
+        <defs>
+            <linearGradient id="psBg-${ps.id}" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#001233"/>
+                <stop offset="50%" stop-color="#023e8a"/>
+                <stop offset="100%" stop-color="#0077b6"/>
+            </linearGradient>
+            <linearGradient id="psDot-${ps.id}" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#90e0ef"/>
+                <stop offset="100%" stop-color="#00b4d8"/>
+            </linearGradient>
+        </defs>
+        <rect width="512" height="512" rx="96" fill="url(#psBg-${ps.id})"/>
+        <path d="M148 88 L308 88 L390 180 L308 270 L214 270 L214 424 L148 424Z M214 148 L300 148 L350 180 L300 212 L214 212Z" fill="white" fill-rule="evenodd"/>
+        <circle cx="348" cy="58" r="20" fill="url(#psDot-${ps.id})"/>
+    </svg>`;
     return `<div class="payslip-preview">
         <div class="ps-company-header">
-            <img src="../assets/logo-full-new.svg" alt="PrimeAxis IT" style="height:40px">
+            ${logoSvg}
             <div>
                 <h2>PrimeAxis IT Solutions</h2>
-                <p>Plot No: 207, Road No: 8, Vasanth Nagar, Near JNTU Metro Station, KPHB</p>
-                <p>Hyderabad - 500072, Telangana, India</p>
             </div>
         </div>
 
@@ -1522,6 +1553,7 @@ function renderPayslip(ps, emp, earn, ded, empContrib) {
             <p><strong>PrimeAxis IT Solutions</strong> | Plot No: 207, Road No: 8, Vasanth Nagar, KPHB, Hyderabad - 500072, Telangana</p>
             <p>Phone: +91 8333079944 | Email: info@primeaxisit.com | Web: www.primeaxisit.com</p>
         </div>
+        <div class="print-footer"><strong>PrimeAxis IT Solutions</strong> | Plot No: 207, Road No: 8, Vasanth Nagar, Near JNTU Metro Station, KPHB, Hyderabad - 500072, Telangana, India<br>Phone: +91 8333079944 | Email: info@primeaxisit.com | Web: www.primeaxisit.com</div>
     </div>`;
 }
 
@@ -2130,11 +2162,32 @@ window.viewRelieving = async (id) => {
 };
 
 function renderRelievingLetter(r) {
+    const logoSvg = `<svg class="lh-icon" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <linearGradient id="relBg-${r.id}" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#001233"/>
+                <stop offset="50%" stop-color="#023e8a"/>
+                <stop offset="100%" stop-color="#0077b6"/>
+            </linearGradient>
+            <linearGradient id="relDot-${r.id}" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#90e0ef"/>
+                <stop offset="100%" stop-color="#00b4d8"/>
+            </linearGradient>
+        </defs>
+        <rect width="512" height="512" rx="96" fill="url(#relBg-${r.id})"/>
+        <path d="M148 88 L308 88 L390 180 L308 270 L214 270 L214 424 L148 424Z M214 148 L300 148 L350 180 L300 212 L214 212Z" fill="white" fill-rule="evenodd"/>
+        <circle cx="348" cy="58" r="20" fill="url(#relDot-${r.id})"/>
+    </svg>`;
     return `<div class="offer-preview">
         <div class="letter-page">
-            <div class="letterhead letterhead-centered">
-                <img src="../assets/logo-full-new.svg" alt="PrimeAxis IT Solutions" class="lh-logo-centered">
-                <div class="lh-tagline">Your Needs. Our Technology.</div>
+            <div class="letterhead letterhead-brand">
+                <div class="lh-brand">
+                    ${logoSvg}
+                    <div class="lh-text">
+                        <span class="lh-name">Prime<span class="lh-name-accent">Axis</span></span>
+                        <span class="lh-sub">IT Solutions</span>
+                    </div>
+                </div>
             </div>
 
             <div class="ref-row">
@@ -2179,19 +2232,9 @@ function renderRelievingLetter(r) {
                     <span>Authorized Signatory</span><br>
                     <span>HR Department</span>
                 </div>
-                <div class="sig-right" style="text-align:center">
-                    <div style="width:80px;height:80px;border:2px dashed #ccc;border-radius:8px;display:flex;align-items:center;justify-content:center;margin:0 auto 8px">
-                        <span style="font-size:10px;color:#aaa">Company<br>Seal</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="letter-footer">
-                <div class="footer-line"></div>
-                <p><strong>PrimeAxis IT Solutions</strong> | Plot No: 207, Road No: 8, Vasanth Nagar, Near JNTU Metro Station, KPHB, Hyderabad - 500072, Telangana, India</p>
-                <p>Phone: +91 8333079944 | Email: info@primeaxisit.com | Web: www.primeaxisit.com</p>
             </div>
         </div>
+        <div class="print-footer"><strong>PrimeAxis IT Solutions</strong> | Plot No: 207, Road No: 8, Vasanth Nagar, Near JNTU Metro Station, KPHB, Hyderabad - 500072, Telangana, India<br>Phone: +91 8333079944 | Email: info@primeaxisit.com | Web: www.primeaxisit.com</div>
     </div>`;
 }
 

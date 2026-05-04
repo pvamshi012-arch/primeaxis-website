@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Relieving Letter Preview</title>
+<link rel="stylesheet" href="portal/css/portal.css">
+<style>
+  body { background: #fff; padding: 0; margin: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+  .preview-wrap { max-width: 100%; margin: 0; background: #fff; border-radius: 0; box-shadow: none; padding: 0; }
+</style>
+</head>
+<body>
+<div class="preview-wrap" id="root">Loading…</div>
+
+<script src="portal/js/portal.js"></script>
+<script>
+  const sample = {
+    id: 1,
+    reference_no: 'PAX/REL/2026/004',
+    employee_name: 'Vamshi Pasham',
+    employee_code: 'PAX-0099',
+    designation: 'Software Developer',
+    department: 'Engineering',
+    date_of_joining: '2024-01-15',
+    date_of_leaving: '2026-04-30',
+    reason: 'resignation',
+    released_at: '2026-05-01',
+    created_at: '2026-05-01'
+  };
+
+  try {
+    document.getElementById('root').innerHTML = renderRelievingLetter(sample);
+  } catch (e) {
+    document.getElementById('root').innerHTML = '<pre style="color:red">Error: ' + e.message + '</pre>';
+    console.error(e);
+  }
+</script>
+</body>
+</html>

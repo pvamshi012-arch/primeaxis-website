@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Offer Letter Preview</title>
+<link rel="stylesheet" href="portal/css/portal.css">
+<style>
+  body { background: #fff; padding: 0; margin: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+  .preview-wrap { max-width: 100%; margin: 0; background: #fff; border-radius: 0; box-shadow: none; padding: 0; }
+</style>
+</head>
+<body>
+<div class="preview-wrap" id="root">Loading…</div>
+
+<script src="portal/js/portal.js"></script>
+<script>
+  // Sample offer data
+  const sampleOffer = {
+    id: 1,
+    reference_no: 'PAX/OL/2026/008',
+    employee_id: 99,
+    employee_name: 'Vamshi Pasham',
+    employee_email: 'pvamshi.012@gmail.com',
+    employee_phone: '+91 9000000000',
+    employee_address: 'H.No 1-2-3, Sample Street',
+    employee_city: 'Hyderabad',
+    employee_state: 'Telangana',
+    employee_pincode: '500072',
+    designation: 'Software Developer',
+    department: 'Engineering',
+    date_of_joining: '2026-06-01',
+    annual_ctc: 900000,
+    probation_months: 6,
+    notice_period_days: 60,
+    reporting_manager: 'Prem Kumar',
+    work_location: 'Hyderabad, Telangana',
+    additional_terms: '',
+    shift_applicable: 0,
+    joining_bonus: 25000,
+    relocation_expense: 0,
+    employment_type: 'permanent',
+    contract_end_date: null,
+    created_at: '2026-05-02',
+    salary_breakup: JSON.stringify({
+      monthly: {
+        basic: 30000, hra: 15000, specialAllowance: 25000,
+        grossSalary: 70000,
+        employerPF: 3600, employerESI: 0, gratuity: 1442,
+        ctc: 75042,
+        employeePF: 3600, employeeESI: 0, professionalTax: 200, tds: 4200,
+        totalDeductions: 8000, netSalary: 62000
+      },
+      annual: {
+        basic: 360000, hra: 180000, specialAllowance: 300000,
+        grossSalary: 840000,
+        employerPF: 43200, employerESI: 0, gratuity: 17304,
+        ctc: 900504
+      }
+    })
+  };
+
+  // Try to call renderOfferLetter; if portal.js doesn't expose it globally we fallback
+  try {
+    document.getElementById('root').innerHTML = renderOfferLetter(sampleOffer);
+  } catch (e) {
+    document.getElementById('root').innerHTML = '<pre style="color:red">Error: ' + e.message + '\n\nPortal.js needs to be loaded in browser context. Open this file via http (e.g. node server) instead of file:// </pre>';
+    console.error(e);
+  }
+</script>
+</body>
+</html>

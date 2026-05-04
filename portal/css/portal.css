@@ -577,25 +577,38 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 /* ===== OFFER LETTER / DOCUMENT PRINT STYLES ===== */
 .offer-preview {
     background: #fff;
-    color: #1a1a1a;
+    color: #1f2937;
     font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
-    font-size: 13.5px;
-    line-height: 1.7;
+    font-size: 13px;
+    line-height: 1.65;
     border-radius: 8px;
     overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: geometricPrecision;
 }
 
 .letter-page {
-    padding: 44px 48px 30px;
+    padding: 0 32px 0;
     position: relative;
     min-height: auto;
-    page-break-after: always;
-    border-bottom: 2px dashed #e2e8f0;
-}
-.letter-page:last-child {
-    border-bottom: none;
     page-break-after: auto;
+    page-break-inside: auto;
+    border-bottom: none;
 }
+.letter-page:first-child { padding-top: 24px; }
+.letter-page:last-child { padding-bottom: 16px; }
+.letter-page + .letter-page { padding-top: 0; }
+
+/* Keep blocks together */
+.offer-preview p { margin: 0 0 8px; text-align: justify; orphans: 3; widows: 3; }
+.offer-preview .recipient { page-break-inside: avoid; }
+.offer-preview .signature-block { page-break-inside: avoid; }
+.offer-preview .terms-list li,
+.offer-preview .docs-list li { page-break-inside: avoid; }
+.offer-preview .section-title { page-break-after: avoid; }
+.offer-preview .ctc-table tr,
+.offer-preview .details-table tr { page-break-inside: avoid; }
 
 /* Letterhead */
 .offer-preview .letterhead {
@@ -616,7 +629,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 .offer-preview .lh-company p { font-size: 11px; color: #4f6ef7; margin: 2px 0 0; font-weight: 600; letter-spacing: 0.5px; }
 .offer-preview .lh-right { text-align: right; font-size: 11px; color: #666; line-height: 1.6; }
 
-/* Centered letterhead (new style) */
+/* Centered letterhead (legacy - kept for compatibility) */
 .offer-preview .letterhead.letterhead-centered {
     flex-direction: column;
     align-items: center;
@@ -641,6 +654,55 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     margin-top: 4px;
 }
 
+/* Brand letterhead (matches website navbar - left-aligned) */
+.offer-preview .letterhead.letterhead-brand {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start !important;
+    padding-bottom: 12px;
+    margin-bottom: 18px;
+    border-bottom: 2.5px solid #4f6ef7;
+}
+.offer-preview .lh-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.offer-preview .lh-icon {
+    height: 42px;
+    width: 42px;
+    object-fit: contain;
+    border-radius: 10px;
+    box-shadow: 0 3px 10px rgba(79,110,247,0.22);
+    flex-shrink: 0;
+    display: block;
+}
+.offer-preview .lh-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+}
+.offer-preview .lh-name {
+    font-size: 19px;
+    font-weight: 800;
+    color: #0a0f1a;
+    letter-spacing: -0.3px;
+}
+.offer-preview .lh-name-accent {
+    background: linear-gradient(135deg, #4f6ef7 0%, #00d4ff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.offer-preview .lh-sub {
+    font-size: 9px;
+    font-weight: 600;
+    color: #64748b;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 2px;
+}
+
 .offer-preview .letterhead-mini {
     display: flex;
     align-items: center;
@@ -655,61 +717,129 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 .offer-preview .ref-row {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 20px;
-    font-size: 13px;
-    color: #444;
+    align-items: center;
+    margin: 0 0 18px;
+    padding: 8px 14px;
+    font-size: 12.5px;
+    color: #334155;
+    background: #f8fafc;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
 }
 
 /* Recipient */
-.offer-preview .recipient { margin-bottom: 16px; line-height: 1.6; }
+.offer-preview .recipient {
+    margin: 0 0 14px;
+    line-height: 1.55;
+    padding: 12px 16px;
+    background: #fafbfc;
+    border-left: 3px solid #cbd5e1;
+    border-radius: 0 6px 6px 0;
+    font-size: 13px;
+}
 
 /* Subject */
 .offer-preview .subject {
     background: #f0f4ff;
-    padding: 10px 16px;
+    padding: 12px 20px;
     border-left: 4px solid #4f6ef7;
-    margin: 16px 0;
-    font-size: 14px;
+    border-right: 4px solid #4f6ef7;
+    margin: 20px auto;
+    font-size: 15px;
+    text-align: center;
+    border-radius: 4px;
+    max-width: 80%;
 }
 
-/* Letter title (for relieving) */
+/* Letter title (Offer Letter / Relieving Letter) */
 .offer-preview .letter-title {
     text-align: center;
-    color: #4f6ef7;
-    margin: 28px 0 20px;
-    font-size: 18px;
-    text-decoration: underline;
-    text-underline-offset: 4px;
+    color: #0a0f1a;
+    margin: 14px 0 18px;
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: none;
+    position: relative;
+    padding-bottom: 8px;
+}
+.offer-preview .letter-title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 2px;
+    background: linear-gradient(90deg, #4f6ef7, #00d4ff);
+    border-radius: 2px;
+}
+
+/* Letterhead with inline title: logo on far-left, Offer Letter centered */
+.offer-preview .letterhead.letterhead-with-title {
+    display: grid !important;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center !important;
+    gap: 16px;
+    width: 100%;
+}
+.offer-preview .letterhead.letterhead-with-title .lh-brand {
+    justify-self: start;
+}
+.offer-preview .letterhead.letterhead-with-title .lh-spacer {
+    justify-self: end;
+}
+.offer-preview .letter-title.letter-title-inline {
+    margin: 0;
+    padding-bottom: 0;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-align: center;
+    justify-self: center;
+    white-space: nowrap;
+    text-transform: none;
+}
+.offer-preview .letter-title.letter-title-inline::after {
+    display: none;
 }
 
 /* Section titles */
 .offer-preview .section-title {
-    color: #4f6ef7;
-    font-size: 14.5px;
+    color: #1e3a8a;
+    font-size: 14px;
     font-weight: 700;
-    margin: 20px 0 12px;
-    padding-bottom: 6px;
-    border-bottom: 1.5px solid #e2e8f0;
+    margin: 22px 0 10px;
+    padding: 6px 0 6px 12px;
+    border-left: 3px solid #4f6ef7;
+    background: linear-gradient(90deg, #f0f4ff 0%, transparent 80%);
+    letter-spacing: 0.2px;
 }
 
 /* Employment details table */
 .offer-preview .details-table {
     width: 100%;
     border-collapse: collapse;
-    margin: 12px 0 16px;
+    margin: 10px 0 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    overflow: hidden;
 }
 .offer-preview .details-table td {
     padding: 8px 14px;
-    border: 1px solid #ddd;
-    font-size: 13px;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 12.5px;
     vertical-align: top;
+    color: #1f2937;
 }
+.offer-preview .details-table tr:last-child td { border-bottom: none; }
 .offer-preview .details-table .label-col {
     background: #f8fafc;
     font-weight: 600;
-    color: #4f6ef7;
-    width: 35%;
+    color: #1e3a8a;
+    width: 38%;
     white-space: nowrap;
+    border-right: 1px solid #e2e8f0;
 }
 
 /* CTC table */
@@ -717,23 +847,33 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     width: 100%;
     border-collapse: collapse;
     margin: 10px 0;
+    border: 1px solid #4f6ef7;
+    border-radius: 6px;
+    overflow: hidden;
 }
 .offer-preview .ctc-table th {
-    padding: 8px 12px;
+    padding: 9px 12px;
     background: #4f6ef7;
     color: #fff;
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 600;
     text-align: left;
-    border: 1px solid #4f6ef7;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
 }
 .offer-preview .ctc-table td {
     padding: 7px 12px;
-    border: 1px solid #ddd;
-    font-size: 12.5px;
-    color: #333;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 12px;
+    color: #1f2937;
 }
-.offer-preview .ctc-table .amt { text-align: right; font-family: 'Inter', monospace; }
+.offer-preview .ctc-table tr:last-child td { border-bottom: none; }
+.offer-preview .ctc-table .amt {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum';
+    white-space: nowrap;
+}
 .offer-preview .ctc-table .section-header td {
     background: #f0f4ff;
     font-size: 12px;
@@ -790,16 +930,18 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     display: flex;
     justify-content: space-between;
     gap: 40px;
+    page-break-inside: avoid;
 }
 .offer-preview .sig-left, .offer-preview .sig-right {
     font-size: 13px;
     line-height: 1.6;
+    flex: 1;
 }
 .offer-preview .sig-line {
-    border-top: 1px solid #666;
+    border-top: 1px solid #475569;
     padding-top: 8px;
-    margin-top: 50px;
-    min-width: 220px;
+    margin-top: 56px;
+    min-width: 200px;
 }
 
 /* Page footer */
@@ -828,6 +970,9 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     border-radius: 8px;
     font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
     font-size: 13px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: geometricPrecision;
 }
 
 .payslip-preview .ps-company-header {
@@ -1851,7 +1996,12 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 
 /* ===== PRINT STYLES ===== */
 @media print {
-    body { background: #fff !important; }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    html, body {
+        background: #fff !important;
+        -webkit-font-smoothing: antialiased !important;
+        text-rendering: geometricPrecision !important;
+    }
     .sidebar, .topbar, .toast-container, .btn, .modal-header,
     .nav-item, .sidebar-footer, .sidebar-header { display: none !important; }
     .main { margin-left: 0 !important; }
@@ -1863,34 +2013,55 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     /* Offer letter print */
     .offer-preview { border-radius: 0 !important; }
     .letter-page {
-        padding: 36px 40px 24px !important;
-        page-break-after: always !important;
+        padding: 8px 14px !important;
+        page-break-after: auto !important;
+        page-break-inside: auto !important;
         border-bottom: none !important;
     }
     .letter-page:last-child { page-break-after: auto !important; }
     .offer-preview .letterhead { border-bottom-width: 2px !important; }
-    .offer-preview .letter-footer, .payslip-preview .ps-company-footer {
-        position: relative;
-        bottom: 0;
-    }
+    .offer-preview p { orphans: 3; widows: 3; }
+    .offer-preview .recipient,
+    .offer-preview .signature-block,
+    .offer-preview .ctc-table tr,
+    .offer-preview .details-table tr,
+    .offer-preview .terms-list li,
+    .offer-preview .docs-list li { page-break-inside: avoid; }
+    .offer-preview .section-title { page-break-after: avoid; }
 
     /* Payslip print */
-    .payslip-preview { padding: 24px 30px !important; border-radius: 0 !important; page-break-inside: avoid; }
+    .payslip-preview { padding: 8px 14px !important; border-radius: 0 !important; page-break-inside: avoid; }
     .payslip-preview .ps-netpay { border-width: 2px !important; }
+    .payslip-preview table { page-break-inside: avoid; }
+    .payslip-preview tr { page-break-inside: avoid; }
+
+    /* Address footer that repeats on every printed page (Chromium repeats fixed elements) */
+    .print-footer {
+        display: block !important;
+        position: fixed !important;
+        bottom: 0; left: 0; right: 0;
+        font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+        font-size: 8.5px;
+        color: #555;
+        line-height: 1.5;
+        padding: 6px 14px 4px;
+        border-top: 1px solid #cbd5e1;
+        background: #fff;
+        text-align: center;
+    }
+    .print-footer strong { color: #0a0f1a; }
+    /* Hide the inline letter-footer since print-footer covers it */
+    .offer-preview .letter-footer,
+    .payslip-preview .ps-company-footer { display: none !important; }
 
     @page {
         size: A4;
-        margin: 12mm 10mm;
+        margin: 12mm 10mm 18mm;
     }
 }
 
-@media print {
-    body { background: #fff; }
-    .sidebar, .topbar, .btn, .modal-overlay, .toast-container { display: none !important; }
-    .main { margin-left: 0; }
-    .content { padding: 0; }
-    .offer-preview, .payslip-preview { box-shadow: none; border: none; }
-}
+/* Hide print-footer on screen */
+.print-footer { display: none; }
 
 /* ===================================================================
    FEED / CHAT
