@@ -23,10 +23,11 @@
     month: 4,
     year: 2026,
     working_days: 22,
-    present_days: 22,
-    gross_earnings: 70000,
-    total_deductions: 8000,
-    net_pay: 62000
+    present_days: 21,
+    lossOfPayDays: 1,
+    gross_earnings: 66818,
+    total_deductions: 9300,
+    net_pay: 57518
   };
   const emp = {
     date_of_joining: '2024-01-15',
@@ -37,9 +38,26 @@
     bank_account: '50100123456789',
     ifsc_code: 'HDFC0001234'
   };
-  const earn = { basic: 30000, hra: 15000, specialAllowance: 25000 };
-  const ded  = { employeePF: 3600, professionalTax: 200, tds: 4200, employeeESI: 0 };
-  const empContrib = { employerPF: 3600, employerESI: 0, regime: 'new', totalExemptions: 0, tdsAnnual: 50400 };
+  const earn = { basic: 28636, hra: 14318, specialAllowance: 23864 };
+  const ded  = {
+    employeePF: 1800,
+    voluntaryPF: 2000,
+    npsEmployee: 1500,
+    professionalTax: 200,
+    tds: 3800,
+    employeeESI: 0
+  };
+  const empContrib = {
+    employerPF: 1800,
+    employerEPF: 550,
+    employerEPS: 1250,
+    employerESI: 0,
+    employerNPS: 3000,
+    gratuityMonthly: 1442,
+    regime: 'new',
+    effectiveExemptions: 36000,
+    tdsAnnual: 45600
+  };
 
   try {
     document.getElementById('root').innerHTML = renderPayslip(ps, emp, earn, ded, empContrib);

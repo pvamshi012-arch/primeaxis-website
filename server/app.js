@@ -1201,20 +1201,33 @@ async function getEmployeeTaxOptions(employeeId, month, year) {
     ).get(employeeId, fy);
 
     if (decl) {
-        return { regime: decl.regime, totalExemptions: decl.total_approved || 0 };
+        return {
+            regime: decl.regime,
+            totalExemptions: decl.total_approved || 0,
+            voluntaryPF: decl.voluntary_pf_monthly || 0,
+            npsEmployee: decl.nps_employee_monthly || 0,
+            npsEmployer: decl.nps_employer_monthly || 0
+        };
     }
     // Check for a submitted but not yet approved declaration — use declared amounts provisionally
     const pending = await db.prepare(
         "SELECT * FROM tax_declarations WHERE employee_id = ? AND financial_year = ? AND status IN ('submitted', 'draft')"
     ).get(employeeId, fy);
 
-    if (pending && pending.regime === 'old' && pending.total_declared > 0) {
-        // Provisional: use declared amounts for draft/submitted old-regime declarations
-        return { regime: 'old', totalExemptions: pending.total_declared };
+    if (pending) {
+        const base = {
+            voluntaryPF: pending.voluntary_pf_monthly || 0,
+            npsEmployee: pending.nps_employee_monthly || 0,
+            npsEmployer: pending.nps_employer_monthly || 0
+        };
+        if (pending.regime === 'old' && pending.total_declared > 0) {
+            return { regime: 'old', totalExemptions: pending.total_declared, ...base };
+        }
+        return { regime: pending.regime || 'new', totalExemptions: 0, ...base };
     }
 
     // Default: new regime, no exemptions
-    return { regime: 'new', totalExemptions: 0 };
+    return { regime: 'new', totalExemptions: 0, voluntaryPF: 0, npsEmployee: 0, npsEmployer: 0 };
 }
 app.get('/api/payslips', auth, async (req, res) => {
     let query, params;
@@ -1773,6 +1786,36 @@ app.put('/api/my/tax-declaration/regime', auth, async (req, res) => {
 
     await db.prepare("UPDATE tax_declarations SET regime = ?, updated_at = datetime('now') WHERE id = ?").run(regime, decl.id);
     res.json({ message: `Regime changed to ${regime}` });
+});
+
+// Employee: Save voluntary contributions (VPF / NPS) — opt-in only
+app.put('/api/my/tax-declaration/voluntary', auth, async (req, res) => {
+    const vpf = Math.max(0, parseFloat(req.body.voluntary_pf_monthly) || 0);
+    const npsEmp = Math.max(0, parseFloat(req.body.nps_employee_monthly) || 0);
+    const npsEr = Math.max(0, parseFloat(req.body.nps_employer_monthly) || 0);
+
+    const emp = await db.prepare('SELECT id, annual_ctc FROM employees WHERE user_id = ?').get(req.user.id);
+    if (!emp) return res.status(404).json({ error: 'Employee not found' });
+
+    // Sanity cap: NPS employer cannot exceed 10% of monthly Basic (Basic = 40% of CTC / 12)
+    if (emp.annual_ctc) {
+        const basicMonthly = Math.round(emp.annual_ctc * 0.40 / 12);
+        const maxEmployerNPS = Math.round(basicMonthly * 0.10);
+        if (npsEr > maxEmployerNPS) {
+            return res.status(400).json({ error: `Employer NPS (80CCD(2)) is capped at 10% of Basic = ₹${maxEmployerNPS}/month` });
+        }
+    }
+
+    const fy = getCurrentFY();
+    const decl = await db.prepare('SELECT * FROM tax_declarations WHERE employee_id = ? AND financial_year = ?').get(emp.id, fy);
+    if (!decl) return res.status(404).json({ error: 'Declaration not found' });
+    if (decl.status !== 'draft') return res.status(400).json({ error: 'Cannot edit after submission' });
+
+    await db.prepare(`UPDATE tax_declarations
+        SET voluntary_pf_monthly = ?, nps_employee_monthly = ?, nps_employer_monthly = ?, updated_at = datetime('now')
+        WHERE id = ?`).run(vpf, npsEmp, npsEr, decl.id);
+
+    res.json({ message: 'Voluntary contributions saved' });
 });
 
 // Employee: Save/update a tax declaration item

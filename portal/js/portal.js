@@ -1501,28 +1501,41 @@ function renderPayslip(ps, emp, earn, ded, empContrib) {
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>1</td><td>Basic Salary</td><td class="amt">${formatINR(earn.basic)}</td>
-                    <td>1</td><td>Provident Fund (PF)</td><td class="amt">${formatINR(ded.employeePF)}</td>
-                </tr>
-                <tr>
-                    <td>2</td><td>House Rent Allowance</td><td class="amt">${formatINR(earn.hra)}</td>
-                    <td>2</td><td>Professional Tax (PT)</td><td class="amt">${formatINR(ded.professionalTax)}</td>
-                </tr>
-                <tr>
-                    <td>3</td><td>Special Allowance</td><td class="amt">${formatINR(earn.specialAllowance)}</td>
-                    <td>3</td><td>Income Tax (TDS)</td><td class="amt">${formatINR(ded.tds)}</td>
-                </tr>
-                ${ded.employeeESI > 0 ? `<tr>
-                    <td></td><td></td><td></td>
-                    <td>4</td><td>Employee State Insurance</td><td class="amt">${formatINR(ded.employeeESI)}</td>
-                </tr>` : ''}
+                ${(() => {
+                    const earnRows = [
+                        { label: 'Basic Salary', amount: earn.basic },
+                        { label: 'House Rent Allowance', amount: earn.hra },
+                        { label: 'Special Allowance', amount: earn.specialAllowance },
+                    ].filter(r => r.amount > 0);
+                    const dedRows = [
+                        { label: 'Provident Fund (PF)', amount: ded.employeePF },
+                        ded.voluntaryPF > 0 ? { label: 'Voluntary PF (VPF)', amount: ded.voluntaryPF } : null,
+                        ded.npsEmployee > 0 ? { label: 'NPS — 80CCD(1B)', amount: ded.npsEmployee } : null,
+                        { label: 'Professional Tax (PT)', amount: ded.professionalTax },
+                        { label: 'Income Tax (TDS)', amount: ded.tds },
+                        ded.employeeESI > 0 ? { label: 'Employee State Insurance', amount: ded.employeeESI } : null,
+                    ].filter(Boolean);
+                    const maxRows = Math.max(earnRows.length, dedRows.length);
+                    let rows = '';
+                    for (let i = 0; i < maxRows; i++) {
+                        const e = earnRows[i], d = dedRows[i];
+                        rows += `<tr>
+                            <td>${e ? (i + 1) : ''}</td><td>${e ? e.label : ''}</td><td class="amt">${e ? formatINR(e.amount) : ''}</td>
+                            <td>${d ? (i + 1) : ''}</td><td>${d ? d.label : ''}</td><td class="amt">${d ? formatINR(d.amount) : ''}</td>
+                        </tr>`;
+                    }
+                    return rows;
+                })()}
                 <tr class="ps-total-row">
                     <td></td><td><strong>Gross Earnings</strong></td><td class="amt"><strong>${formatINR(ps.gross_earnings)}</strong></td>
                     <td></td><td><strong>Total Deductions</strong></td><td class="amt"><strong>${formatINR(ps.total_deductions)}</strong></td>
                 </tr>
             </tbody>
         </table>
+
+        ${ps.lossOfPayDays > 0 ? `<div class="ps-lop-info" style="font-size:11.5px;color:#92400e;background:#fef3c7;padding:8px 12px;border-radius:4px;margin:8px 0;border-left:3px solid #f59e0b">
+            <strong>Loss of Pay:</strong> ${ps.lossOfPayDays} day(s) — earnings pro-rated based on attendance.
+        </div>` : ''}
 
         <div class="ps-netpay">
             <div class="ps-netpay-row">
@@ -1535,12 +1548,17 @@ function renderPayslip(ps, emp, earn, ded, empContrib) {
         </div>
 
         ${empContrib && empContrib.employerPF ? `<div class="ps-employer-contrib">
-            <strong>Employer Contributions:</strong> Provident Fund: ${formatINR(empContrib.employerPF)}${empContrib.employerESI > 0 ? ' | ESI: ' + formatINR(empContrib.employerESI) : ''}
+            <strong>Employer Contributions:</strong>
+            EPF: ${formatINR(empContrib.employerEPF || (empContrib.employerPF - (empContrib.employerEPS || 0)))}
+            ${empContrib.employerEPS ? ` | EPS: ${formatINR(empContrib.employerEPS)}` : ''}
+            ${empContrib.employerESI > 0 ? ` | ESI: ${formatINR(empContrib.employerESI)}` : ''}
+            ${empContrib.employerNPS > 0 ? ` | NPS 80CCD(2): ${formatINR(empContrib.employerNPS)}` : ''}
+            ${empContrib.gratuityMonthly ? ` | Gratuity: ${formatINR(empContrib.gratuityMonthly)}` : ''}
         </div>` : ''}
 
         ${empContrib && empContrib.regime ? `<div class="ps-tax-regime-info">
             <strong>Tax Regime:</strong> ${empContrib.regime === 'old' ? 'Old Regime' : 'New Regime'}
-            ${empContrib.totalExemptions > 0 ? ` | <strong>Declared Exemptions:</strong> ${formatINR(empContrib.totalExemptions)}` : ''}
+            ${empContrib.effectiveExemptions > 0 ? ` | <strong>Total Exemptions:</strong> ${formatINR(empContrib.effectiveExemptions)}` : (empContrib.totalExemptions > 0 ? ` | <strong>Declared Exemptions:</strong> ${formatINR(empContrib.totalExemptions)}` : '')}
             ${empContrib.tdsAnnual !== undefined ? ` | <strong>Annual TDS:</strong> ${formatINR(empContrib.tdsAnnual)}` : ''}
         </div>` : ''}
 
@@ -2778,6 +2796,44 @@ async function pageMyTaxDeclaration() {
         html += '</div>';
     }
 
+    // Voluntary Contributions (visible in both regimes)
+    html += `<div class="tax-section-card" style="margin-top:16px">
+        <div class="tax-section-header" onclick="toggleTaxSection('VOLUNTARY')">
+            <div class="tax-section-title">
+                <i class="fas fa-chevron-right tax-chevron" id="chev_VOLUNTARY"></i>
+                <h4>Voluntary Contributions <span style="font-weight:400;color:var(--p-text-muted);font-size:0.85em">(Optional — applies only if you opt in)</span></h4>
+            </div>
+            <div class="tax-section-meta">
+                <span class="tax-amount ${(decl.voluntary_pf_monthly + decl.nps_employee_monthly + decl.nps_employer_monthly) > 0 ? 'has-value' : ''}">
+                    ${formatINR((decl.voluntary_pf_monthly || 0) + (decl.nps_employee_monthly || 0) + (decl.nps_employer_monthly || 0))}/mo
+                </span>
+            </div>
+        </div>
+        <div class="tax-section-body" id="body_VOLUNTARY" style="display:none">
+            <p class="hra-info" style="margin-bottom:12px"><i class="fas fa-info-circle"></i>
+                These are <strong>optional</strong> contributions. Statutory PF (12% of Basic), Professional Tax, and TDS are mandatory and apply automatically — you do not need to declare them here.
+            </p>
+            <div class="bgv-form-grid">
+                <div class="form-group">
+                    <label>Voluntary PF (VPF) — Monthly (₹)</label>
+                    <input class="form-control" type="number" id="vol_vpf" value="${decl.voluntary_pf_monthly || ''}" placeholder="0" min="0" ${!isDraft ? 'disabled' : ''}>
+                    <small style="color:var(--p-text-muted)">Extra PF contribution over and above the statutory 12%. Earns the same EPF interest rate.</small>
+                </div>
+                <div class="form-group">
+                    <label>NPS — Employee — Monthly (₹) <span style="color:var(--p-text-muted);font-size:0.85em">[Sec 80CCD(1B)]</span></label>
+                    <input class="form-control" type="number" id="vol_nps_emp" value="${decl.nps_employee_monthly || ''}" placeholder="0" min="0" ${!isDraft ? 'disabled' : ''}>
+                    <small style="color:var(--p-text-muted)">Old regime: extra deduction up to ₹50,000/year. New regime: no tax benefit, but you can still contribute.</small>
+                </div>
+                <div class="form-group">
+                    <label>NPS — Employer — Monthly (₹) <span style="color:var(--p-text-muted);font-size:0.85em">[Sec 80CCD(2)]</span></label>
+                    <input class="form-control" type="number" id="vol_nps_er" value="${decl.nps_employer_monthly || ''}" placeholder="0" min="0" ${!isDraft ? 'disabled' : ''}>
+                    <small style="color:var(--p-text-muted)">Capped at 10% of Basic. Deductible in <strong>both regimes</strong>. Reduces your special allowance — needs HR approval as part of CTC structuring.</small>
+                </div>
+            </div>
+            ${isDraft ? `<button class="btn btn-primary btn-sm" onclick="saveVoluntary()" style="margin-top:12px"><i class="fas fa-save"></i> Save Voluntary Contributions</button>` : ''}
+        </div>
+    </div>`;
+
     // Action buttons
     if (isDraft) {
         html += `<div class="tax-actions">
@@ -2814,6 +2870,22 @@ window.switchRegime = async (regime) => {
 window.saveTaxItem = async (section, category, value) => {
     try {
         await apiPost('/my/tax-declaration/item', { section, category, declared_amount: parseFloat(value) || 0 });
+    } catch (e) { toast(e.message, 'error'); }
+};
+
+window.saveVoluntary = async () => {
+    const vpf = parseFloat($('#vol_vpf').value) || 0;
+    const npsEmp = parseFloat($('#vol_nps_emp').value) || 0;
+    const npsEr = parseFloat($('#vol_nps_er').value) || 0;
+    if (vpf < 0 || npsEmp < 0 || npsEr < 0) return toast('Amounts cannot be negative', 'error');
+    try {
+        await apiPut('/my/tax-declaration/voluntary', {
+            voluntary_pf_monthly: vpf,
+            nps_employee_monthly: npsEmp,
+            nps_employer_monthly: npsEr
+        });
+        toast('Voluntary contributions saved');
+        pageMyTaxDeclaration();
     } catch (e) { toast(e.message, 'error'); }
 };
 

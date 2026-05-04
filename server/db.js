@@ -446,6 +446,10 @@ try { db.exec("ALTER TABLE offer_letters ADD COLUMN employment_type TEXT DEFAULT
 try { db.exec('ALTER TABLE offer_letters ADD COLUMN contract_end_date TEXT'); } catch(e) {}
 // Ticket manager CC
 try { db.exec('ALTER TABLE tickets ADD COLUMN cc_manager_id INTEGER REFERENCES users(id)'); } catch(e) {}
+// Voluntary PF / NPS for payslip calculation
+try { db.exec('ALTER TABLE tax_declarations ADD COLUMN voluntary_pf_monthly REAL DEFAULT 0'); } catch(e) {}
+try { db.exec('ALTER TABLE tax_declarations ADD COLUMN nps_employee_monthly REAL DEFAULT 0'); } catch(e) {}
+try { db.exec('ALTER TABLE tax_declarations ADD COLUMN nps_employer_monthly REAL DEFAULT 0'); } catch(e) {}
 
 // ===== SEED MANDATORY TRAINING MODULES =====
 const trainingExists = db.prepare('SELECT COUNT(*) as c FROM training_modules').get();

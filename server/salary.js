@@ -82,6 +82,8 @@ function breakdownCTC(annualCTC) {
             specialAllowance: specialAllowanceAnnual,
             grossSalary: grossAnnual,
             employerPF: employerPFAnnual,
+            employerEPF: (employerPFMonthly - Math.min(Math.round(pfBase * 0.0833), 1250)) * 12,
+            employerEPS: Math.min(Math.round(pfBase * 0.0833), 1250) * 12,
             employerESI: employerESIMonthly * 12,
             gratuity: gratuityAnnual,
             employeePF: employeePFAnnual,
@@ -98,6 +100,8 @@ function breakdownCTC(annualCTC) {
             specialAllowance: specialAllowanceMonthly,
             grossSalary: grossMonthly,
             employerPF: employerPFMonthly,
+            employerEPF: employerPFMonthly - Math.min(Math.round(pfBase * 0.0833), 1250),
+            employerEPS: Math.min(Math.round(pfBase * 0.0833), 1250),
             employerESI: employerESIMonthly,
             gratuity: gratuityMonthly,
             employeePF: employeePFMonthly,
@@ -108,6 +112,35 @@ function breakdownCTC(annualCTC) {
             netSalary: netMonthly
         }
     };
+}
+
+// Surcharge slabs (FY 2024-25+) — applied on TAX (not income) before cess
+// Old regime: 10%/15%/25%/37%; New regime caps surcharge at 25%
+function calculateSurcharge(taxableIncome, taxBeforeSurcharge, regime) {
+    if (taxableIncome <= 5000000) return 0;
+    let rate = 0;
+    if (taxableIncome <= 10000000) rate = 0.10;
+    else if (taxableIncome <= 20000000) rate = 0.15;
+    else if (taxableIncome <= 50000000) rate = (regime === 'new') ? 0.25 : 0.25;
+    else rate = (regime === 'new') ? 0.25 : 0.37;
+
+    let surcharge = taxBeforeSurcharge * rate;
+
+    // Marginal relief at each threshold: surcharge + tax cannot exceed (income above threshold) + (tax at threshold without surcharge)
+    const thresholds = [5000000, 10000000, 20000000, 50000000];
+    for (const t of thresholds) {
+        if (taxableIncome > t) {
+            // Tax at threshold (without surcharge)
+            const taxAtThreshold = taxBeforeSurcharge * (t / taxableIncome);
+            const incomeOver = taxableIncome - t;
+            const maxTotalTax = taxAtThreshold + incomeOver;
+            const totalTax = taxBeforeSurcharge + surcharge;
+            if (totalTax > maxTotalTax) {
+                surcharge = Math.max(0, maxTotalTax - taxBeforeSurcharge);
+            }
+        }
+    }
+    return Math.round(surcharge);
 }
 
 // TDS Calculation — New Tax Regime (FY 2024-25+)
@@ -142,10 +175,20 @@ function calculateTDS(annualGross, regime = 'new', totalExemptions = 0) {
         prevLimit = slab.limit;
     }
 
-    // Section 87A rebate: No tax if taxable income ≤ ₹7,00,000
-    if (taxableIncome <= 700000) tax = 0;
+    // Section 87A rebate: No tax if taxable income ≤ ₹7,00,000 (new regime FY 2024-25)
+    if (taxableIncome <= 700000) {
+        tax = 0;
+    } else {
+        // Marginal relief at ₹7L: tax cannot exceed (income - 7,00,000)
+        const incomeOver7L = taxableIncome - 700000;
+        if (tax > incomeOver7L) tax = incomeOver7L;
+    }
 
-    // Cess: 4%
+    // Surcharge (on tax, before cess)
+    const surcharge = calculateSurcharge(taxableIncome, tax, 'new');
+    tax += surcharge;
+
+    // Health & Education Cess: 4%
     tax = Math.round(tax * 1.04);
 
     return tax;
@@ -178,21 +221,34 @@ function calculateTDSOldRegime(annualGross, totalExemptions) {
         prevLimit = slab.limit;
     }
 
-    // Section 87A rebate: No tax if taxable income ≤ ₹5,00,000
+    // Section 87A rebate: No tax if taxable income ≤ ₹5,00,000 (old regime)
     if (taxableIncome <= 500000) tax = 0;
 
-    // Cess: 4%
+    // Surcharge (on tax, before cess)
+    const surcharge = calculateSurcharge(taxableIncome, tax, 'old');
+    tax += surcharge;
+
+    // Health & Education Cess: 4%
     tax = Math.round(tax * 1.04);
 
     return tax;
 }
 
 // Calculate payslip for a specific month
-// Options: { regime: 'old'|'new', totalExemptions: number, extraTaxableIncome: number }
+// Options:
+//   regime: 'old' | 'new'
+//   totalExemptions: declared 80C/HRA/etc. (old regime only)
+//   extraTaxableIncome: bonuses, joining bonus etc. (annual)
+//   voluntaryPF: extra VPF deducted monthly (over and above statutory 12%)
+//   npsEmployee: 80CCD(1B) — employee NPS contribution monthly (old regime tax benefit)
+//   npsEmployer: 80CCD(2) — employer NPS contribution monthly (deductible in BOTH regimes, capped at 10% of basic)
 function calculatePayslip(annualCTC, workingDays, presentDays, options = {}) {
     const regime = options.regime || 'new';
     const totalExemptions = options.totalExemptions || 0;
     const extraTaxableIncome = options.extraTaxableIncome || 0;
+    const voluntaryPF = Math.max(0, options.voluntaryPF || 0);
+    const npsEmployee = Math.max(0, options.npsEmployee || 0);
+    const npsEmployerInput = Math.max(0, options.npsEmployer || 0);
 
     const monthlyCTC = annualCTC / 12;
 
@@ -201,24 +257,45 @@ function calculatePayslip(annualCTC, workingDays, presentDays, options = {}) {
     // HRA: 50% of Basic (metro)
     const hraMonthly = Math.round(basicMonthly * 0.50);
 
-    // Employer PF
+    // Employer PF (statutory cap on ₹15,000 base)
     const pfBase = Math.min(basicMonthly, 15000);
     const employerPFMonthly = Math.round(pfBase * 0.12);
+    // EPS split (Employees' Pension Scheme) — 8.33% of pfBase, capped at ₹1,250
+    const epsMonthly = Math.min(Math.round(pfBase * 0.0833), 1250);
+    // EPF portion of employer's 12% = total - EPS
+    const employerEPFMonthly = employerPFMonthly - epsMonthly;
+    // Employer NPS — capped at 10% of Basic (Sec 80CCD(2))
+    const npsEmployerMonthly = Math.min(npsEmployerInput, Math.round(basicMonthly * 0.10));
+
     // Gratuity
     const gratuityMonthly = Math.round((basicMonthly / 26) * 15 / 12);
 
-    // Special Allowance
-    const specialAllowanceMonthly = Math.round(monthlyCTC) - basicMonthly - hraMonthly - employerPFMonthly - gratuityMonthly;
+    // Special Allowance (balancer; reduce when employer NPS is part of CTC)
+    const specialAllowanceMonthly =
+        Math.round(monthlyCTC) - basicMonthly - hraMonthly - employerPFMonthly - gratuityMonthly - npsEmployerMonthly;
 
     // Gross
-    const grossMonthly = basicMonthly + hraMonthly + specialAllowanceMonthly;
+    const grossMonthly = basicMonthly + hraMonthly + Math.max(0, specialAllowanceMonthly);
     const grossAnnual = grossMonthly * 12;
 
-    // TDS using regime + exemptions + extra taxable income (bonuses etc.)
-    const tdsAnnual = calculateTDS(grossAnnual + extraTaxableIncome, regime, totalExemptions);
+    // Tax-deductible exemptions for old regime: declared + employer NPS + employee NPS (80CCD(1B) up to ₹50K/yr)
+    // For new regime: only employer NPS under 80CCD(2) is deductible
+    const npsEmployeeAnnualCap = Math.min(npsEmployee * 12, 50000);
+    let effectiveExemptions = 0;
+    if (regime === 'old') {
+        effectiveExemptions = totalExemptions + (npsEmployerMonthly * 12) + npsEmployeeAnnualCap;
+    } else {
+        effectiveExemptions = npsEmployerMonthly * 12;
+    }
+
+    // TDS using regime + effective exemptions + extra taxable income (bonuses)
+    // For new regime, exemptions are passed as a "deduction" via the new TDS path below
+    const tdsAnnual = (regime === 'old')
+        ? calculateTDS(grossAnnual + extraTaxableIncome, 'old', effectiveExemptions)
+        : calculateTDS(grossAnnual + extraTaxableIncome - effectiveExemptions, 'new', 0);
     const tdsMonthly = Math.round(tdsAnnual / 12);
 
-    // ESI
+    // ESI threshold (₹21,000 monthly gross)
     let employeeESIMonthly = 0;
     if (grossMonthly <= 21000) {
         employeeESIMonthly = Math.round(grossMonthly * 0.0075);
@@ -230,24 +307,34 @@ function calculatePayslip(annualCTC, workingDays, presentDays, options = {}) {
     else if (grossMonthly <= 20000) professionalTaxMonthly = 150;
     else professionalTaxMonthly = 200;
 
-    const ratio = presentDays / workingDays;
+    // LOP pro-rata ratio
+    const ratio = workingDays > 0 ? presentDays / workingDays : 0;
 
     const earnings = {
         basic: Math.round(basicMonthly * ratio),
         hra: Math.round(hraMonthly * ratio),
-        specialAllowance: Math.round(specialAllowanceMonthly * ratio),
+        specialAllowance: Math.round(Math.max(0, specialAllowanceMonthly) * ratio),
     };
     earnings.grossEarnings = earnings.basic + earnings.hra + earnings.specialAllowance;
 
     // Deductions based on actual earnings
     const actualPfBase = Math.min(earnings.basic, 15000);
+    const employeePFMonthly = Math.round(actualPfBase * 0.12);
     const deductions = {
-        employeePF: Math.round(actualPfBase * 0.12),
+        employeePF: employeePFMonthly,
+        voluntaryPF: voluntaryPF,
+        npsEmployee: npsEmployee,
         employeeESI: earnings.grossEarnings <= 21000 ? Math.round(earnings.grossEarnings * 0.0075) : 0,
         professionalTax: professionalTaxMonthly,
         tds: Math.round(tdsMonthly * ratio),
     };
-    deductions.totalDeductions = deductions.employeePF + deductions.employeeESI + deductions.professionalTax + deductions.tds;
+    deductions.totalDeductions =
+        deductions.employeePF +
+        deductions.voluntaryPF +
+        deductions.npsEmployee +
+        deductions.employeeESI +
+        deductions.professionalTax +
+        deductions.tds;
 
     const lossOfPay = Math.round(grossMonthly - earnings.grossEarnings);
 
@@ -258,12 +345,18 @@ function calculatePayslip(annualCTC, workingDays, presentDays, options = {}) {
         lossOfPay,
         regime,
         totalExemptions,
+        effectiveExemptions,
         tdsAnnual,
         earnings,
         deductions,
         netPay: earnings.grossEarnings - deductions.totalDeductions,
-        employerPF: Math.round(actualPfBase * 0.12),
+        // Employer side (informational, not deducted from employee)
+        employerPF: employerPFMonthly,        // Total employer PF contribution
+        employerEPF: employerEPFMonthly,       // EPF portion (3.67%)
+        employerEPS: epsMonthly,               // EPS portion (8.33%, capped ₹1,250)
         employerESI: earnings.grossEarnings <= 21000 ? Math.round(earnings.grossEarnings * 0.0325) : 0,
+        employerNPS: npsEmployerMonthly,
+        gratuityMonthly,
     };
 }
 
