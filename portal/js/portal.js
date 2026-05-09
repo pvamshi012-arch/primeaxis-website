@@ -3962,7 +3962,7 @@ window.deletePayslipExtra = async (id) => {
 // ===================================================================
 async function pageJobPostings() {
     pageTitle.textContent = 'Job Postings';
-    const jobs = await api('/api/admin/job-postings');
+    const jobs = await apiGet('/admin/job-postings');
     content.innerHTML = `
         <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
             <div>
@@ -4003,7 +4003,7 @@ window._jobCache = null;
 async function openJobModal(id) {
     let job = null;
     if (id) {
-        const jobs = await api('/api/admin/job-postings');
+        const jobs = await apiGet('/admin/job-postings');
         job = jobs.find(j => j.id === id);
     }
     window._jobCache = job;
@@ -4076,32 +4076,32 @@ async function saveJobPosting(id) {
         description: document.getElementById('jp-desc').value.trim(),
         requirements: document.getElementById('jp-reqs').value.trim(),
     };
-    if (!data.title || !data.department) return showToast('Title and Department are required', 'error');
+    if (!data.title || !data.department) return toast('Title and Department are required', 'error');
     if (id) {
         data.is_active = window._jobCache?.is_active !== undefined ? window._jobCache.is_active : 1;
-        await api(`/api/admin/job-postings/${id}`, 'PUT', data);
-        showToast('Job posting updated', 'success');
+        await apiPut(`/admin/job-postings/${id}`, data);
+        toast('Job posting updated', 'success');
     } else {
-        await api('/api/admin/job-postings', 'POST', data);
-        showToast('Job posting created', 'success');
+        await apiPost('/admin/job-postings', data);
+        toast('Job posting created', 'success');
     }
     document.getElementById('modal').innerHTML = '';
     navigate('job-postings');
 }
 
 async function toggleJobActive(id, active) {
-    const jobs = await api('/api/admin/job-postings');
+    const jobs = await apiGet('/admin/job-postings');
     const job = jobs.find(j => j.id === id);
     if (!job) return;
-    await api(`/api/admin/job-postings/${id}`, 'PUT', { ...job, is_active: active });
-    showToast(active ? 'Job posting activated' : 'Job posting deactivated', 'success');
+    await apiPut(`/admin/job-postings/${id}`, { ...job, is_active: active });
+    toast(active ? 'Job posting activated' : 'Job posting deactivated', 'success');
     navigate('job-postings');
 }
 
 async function deleteJob(id) {
     if (!confirm('Are you sure you want to permanently delete this job posting?')) return;
-    await api(`/api/admin/job-postings/${id}`, 'DELETE');
-    showToast('Job posting deleted', 'success');
+    await api(`/admin/job-postings/${id}`, { method: 'DELETE' });
+    toast('Job posting deleted', 'success');
     navigate('job-postings');
 }
 
@@ -4110,7 +4110,7 @@ async function deleteJob(id) {
 // ===================================================================
 async function pageApplications() {
     pageTitle.textContent = 'Job Applications';
-    const apps = await api('/api/admin/applications');
+    const apps = await apiGet('/admin/applications');
     content.innerHTML = `
         <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
             <div>
@@ -4152,8 +4152,8 @@ function appStatusBadge(status) {
 }
 
 async function updateAppStatus(id, status) {
-    await api(`/api/admin/applications/${id}/status`, 'PUT', { status });
-    showToast('Application status updated', 'success');
+    await apiPut(`/admin/applications/${id}/status`, { status });
+    toast('Application status updated', 'success');
 }
 
 // ===== XSS PROTECTION =====
